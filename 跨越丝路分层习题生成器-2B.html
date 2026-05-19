@@ -1,0 +1,2533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>跨越丝路分层习题生成器 · 2B</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f7f5f0;
+  --card: #ffffff;
+  --text: #1a1714;
+  --muted: #7a7570;
+  --border: #e2ded8;
+  --t1: #d4622a; --t1l: #fdf0ea; --t1m: #f5a07a;
+  --t2: #2a6fd4; --t2l: #eaf0fd; --t2m: #7aaaf5;
+  --t3: #1f8c5a; --t3l: #e8f7f0; --t3m: #6fcba0;
+  --correct: #1f8c5a; --correctbg: #e8f7f0;
+  --wrong: #c0392b; --wrongbg: #fdecea;
+  --gold: #c9a227;
+  --radius: 14px;
+  --shadow: 0 2px 16px rgba(0,0,0,0.07);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--text); min-height: 100vh; }
+
+/* ─── SETUP SCREEN ─── */
+.setup { max-width: 780px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+.brand { display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; }
+.brand-icon { width: 40px; height: 40px; background: var(--text); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-family: 'Noto Serif SC', serif; font-size: 20px; font-weight: 600; }
+.brand h1 { font-size: 17px; font-weight: 600; line-height: 1.2; }
+.brand p { font-size: 12px; color: var(--muted); }
+.section-label { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.lesson-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-bottom: 1.5rem; }
+.lesson-card { border: 1.5px solid var(--border); border-radius: 10px; background: var(--card); padding: 10px 12px; cursor: pointer; transition: all .15s; }
+.lesson-card:hover { border-color: #aaa; }
+.lesson-card.active { border-color: var(--text); box-shadow: 0 0 0 3px rgba(26,23,20,.08); }
+.lesson-card .lc-num { font-size: 10px; color: var(--muted); margin-bottom: 2px; }
+.lesson-card .lc-title { font-size: 13px; font-weight: 500; line-height: 1.3; }
+.lesson-card .lc-cn { font-size: 11px; color: var(--muted); font-family: 'Noto Serif SC', serif; }
+.tier-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 1.75rem; }
+.tier-card { border: 1.5px solid var(--border); border-radius: 12px; background: var(--card); padding: 14px; cursor: pointer; transition: all .15s; }
+.tier-card:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+.tier-card.t1.active { border-color: var(--t1); background: var(--t1l); }
+.tier-card.t2.active { border-color: var(--t2); background: var(--t2l); }
+.tier-card.t3.active { border-color: var(--t3); background: var(--t3l); }
+.tier-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+.t1 .tier-dot { background: var(--t1); } .t2 .tier-dot { background: var(--t2); } .t3 .tier-dot { background: var(--t3); }
+.tier-card .tc-level { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 6px; display: flex; align-items: center; }
+.tier-card.t1.active .tc-level { color: var(--t1); } .tier-card.t2.active .tc-level { color: var(--t2); } .tier-card.t3.active .tc-level { color: var(--t3); }
+.tier-card .tc-cn { font-size: 16px; font-weight: 600; font-family: 'Noto Serif SC', serif; margin-bottom: 4px; }
+.tier-card .tc-desc { font-size: 11px; color: var(--muted); line-height: 1.4; }
+.start-btn { width: 100%; padding: 16px; background: var(--text); color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; display: flex; align-items: center; justify-content: center; gap: 10px; transition: opacity .15s; }
+.start-btn:hover { opacity: .88; }
+.start-btn .sb-cn { font-family: 'Noto Serif SC', serif; font-size: 15px; }
+
+/* ─── QUIZ SCREEN ─── */
+.quiz { display: none; max-width: 860px; margin: 0 auto; padding: 1.5rem; }
+.quiz-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+.tier-badge { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.tb-t1 { background: var(--t1l); color: var(--t1); } .tb-t2 { background: var(--t2l); color: var(--t2); } .tb-t3 { background: var(--t3l); color: var(--t3); }
+.q-counter { font-size: 13px; color: var(--muted); }
+.timer-wrap { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; }
+.timer-wrap svg { width: 16px; height: 16px; }
+.timer-warn { color: #c9a227; } .timer-urgent { color: var(--wrong); }
+.exit-btn { padding: 5px 12px; border-radius: 20px; border: 1.5px solid var(--border); background: none; font-size: 12px; font-weight: 600; color: var(--muted); cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all .15s; }
+.exit-btn:hover { border-color: var(--wrong); color: var(--wrong); background: var(--wrongbg); }
+.progress { height: 4px; background: var(--border); border-radius: 2px; margin-bottom: 1.5rem; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 2px; transition: width .4s ease; }
+.pf-t1 { background: var(--t1); } .pf-t2 { background: var(--t2); } .pf-t3 { background: var(--t3); }
+
+/* question card */
+.q-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem; box-shadow: var(--shadow); }
+.q-type-tag { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 10px; }
+.q-stem { font-size: 22px; font-weight: 500; line-height: 1.55; margin-bottom: 6px; }
+.q-stem .cn { font-family: 'Noto Serif SC', serif; }
+.q-hint { font-size: 12px; color: var(--muted); padding: 8px 12px; background: var(--bg); border-radius: 8px; border-left: 3px solid var(--border); margin-top: 10px; margin-bottom: 16px; }
+
+/* MC options */
+.options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.opt-btn { background: var(--bg); border: 1.5px solid var(--border); border-radius: 10px; padding: 16px 18px; cursor: pointer; font-size: 17px; font-family: 'DM Sans', sans-serif; color: var(--text); text-align: left; display: flex; align-items: flex-start; gap: 10px; transition: all .12s; line-height: 1.4; }
+.opt-btn:hover:not(:disabled) { border-color: #999; background: var(--card); }
+.opt-btn:disabled { cursor: default; }
+.opt-btn.correct { background: var(--correctbg); border-color: var(--correct); color: var(--correct); }
+.opt-btn.wrong { background: var(--wrongbg); border-color: var(--wrong); color: var(--wrong); }
+.opt-key { width: 24px; height: 24px; border-radius: 6px; background: var(--card); border: 1px solid var(--border); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--muted); }
+.opt-btn.correct .opt-key { background: var(--correct); border-color: var(--correct); color: #fff; }
+.opt-btn.wrong .opt-key { background: var(--wrong); border-color: var(--wrong); color: #fff; }
+.opt-text { font-family: 'Noto Serif SC', serif; font-size: 18px; }
+
+/* fill-in */
+.fill-wrap { display: flex; gap: 8px; flex-direction: column; }
+.fill-input { width: 100%; border: 1.5px solid var(--border); border-radius: 10px; padding: 16px 18px; font-size: 20px; font-family: 'Noto Serif SC', serif; background: var(--bg); color: var(--text); outline: none; transition: border-color .15s; }
+.fill-input:focus { border-color: #999; background: var(--card); }
+.fill-input.correct { border-color: var(--correct); background: var(--correctbg); color: var(--correct); }
+.fill-input.wrong { border-color: var(--wrong); background: var(--wrongbg); color: var(--wrong); }
+.submit-btn { padding: 11px 20px; background: var(--text); color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: opacity .15s; align-self: flex-start; }
+.submit-btn:hover { opacity: .85; }
+
+/* match */
+.match-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.match-col-label { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .06em; }
+.match-col { display: flex; flex-direction: column; gap: 7px; }
+.match-item { padding: 13px 16px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 18px; cursor: pointer; background: var(--bg); color: var(--text); font-family: 'Noto Serif SC', serif; text-align: center; transition: all .12s; }
+.match-item:hover:not(.matched):not(.wrong-match) { border-color: #999; background: var(--card); }
+.match-item.selected { border-color: var(--t2); background: var(--t2l); color: var(--t2); }
+.match-item.matched { border-color: var(--correct); background: var(--correctbg); color: var(--correct); cursor: default; }
+.match-item.wrong-match { border-color: var(--wrong); background: var(--wrongbg); color: var(--wrong); }
+.match-item.paired-left, .match-item.paired-right { border-color: var(--t2); background: var(--t2l); color: var(--t2); }
+.match-check-btn { margin-top: 10px; padding: 10px 18px; background: var(--text); color: #fff; border: none; border-radius: 9px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+
+/* ─── READING PASSAGE ─── */
+.reading-passage {
+  background: var(--t3l);
+  border: 1.5px solid var(--t3m);
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+  font-family: 'Noto Serif SC', serif;
+  color: var(--text);
+  line-height: 1;
+}
+.reading-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--t3);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.reading-label::before { content: '📖'; font-size: 13px; }
+
+/* Word-block pinyin layout */
+.passage-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0;
+  row-gap: 10px;
+}
+/* Each word or punctuation unit */
+.w {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 1px;
+  vertical-align: bottom;
+}
+.w .py {
+  font-size: 11px;
+  color: var(--t3);
+  font-style: italic;
+  line-height: 1.3;
+  white-space: nowrap;
+  min-height: 15px;
+}
+.w .ch {
+  font-size: 16px;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+/* Punctuation — no pinyin space needed */
+.w.punct .py { min-height: 0; font-size: 0; }
+.w.punct .ch { font-size: 16px; margin-left: -2px; }
+/* Sentence break = small gap */
+.w.brk { width: 100%; height: 0; }
+
+/* No-pinyin mode: hide py row, tighten layout */
+.passage-nopinyin .w .py { display: none; }
+.passage-nopinyin .passage-body { row-gap: 4px; }
+.passage-nopinyin .w .ch { font-size: 16px; line-height: 1.8; }
+
+/* ─── HOTS (Critical/Creative Thinking) ─── */
+.hots-box {
+  background: linear-gradient(135deg, #fdf8e8, #f9f0fb);
+  border: 1.5px solid var(--gold);
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+.hots-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--gold);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.hots-label::before { content: '💭'; font-size: 13px; }
+.hots-prompts {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.hots-prompt {
+  font-size: 13px;
+  color: var(--muted);
+  padding: 7px 11px;
+  background: rgba(255,255,255,0.7);
+  border-radius: 7px;
+  border-left: 3px solid var(--gold);
+  line-height: 1.5;
+}
+.hots-open-input {
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 13px 14px;
+  font-size: 15px;
+  font-family: 'Noto Serif SC', serif;
+  background: rgba(255,255,255,0.8);
+  color: var(--text);
+  outline: none;
+  resize: vertical;
+  min-height: 90px;
+  transition: border-color .15s;
+  margin-top: 12px;
+}
+.hots-open-input:focus { border-color: var(--gold); }
+.hots-submit-btn {
+  margin-top: 8px;
+  padding: 10px 20px;
+  background: var(--gold);
+  color: #fff;
+  border: none;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+.hots-submitted {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: var(--correctbg);
+  color: var(--correct);
+  border-radius: 9px;
+  font-size: 13px;
+  display: none;
+}
+
+/* feedback */
+.feedback { margin-top: 10px; padding: 10px 14px; border-radius: 9px; font-size: 13px; display: none; }
+.feedback.show { display: block; }
+.feedback.ok { background: var(--correctbg); color: var(--correct); }
+.feedback.bad { background: var(--wrongbg); color: var(--wrong); }
+
+.next-btn { display: none; width: 100%; padding: 13px; background: var(--card); border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; color: var(--text); margin-top: 10px; transition: all .12s; }
+.next-btn:hover { border-color: var(--text); }
+
+/* ─── HINT (hidden by default, click to reveal) ─── */
+.hint-toggle { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; cursor: pointer; margin-top: 8px; margin-bottom: 12px; transition: all .15s; user-select: none; }
+.hint-toggle:hover { border-color: #aaa; color: var(--text); }
+.hint-toggle .ht-arrow { font-size: 10px; transition: transform .2s; }
+.hint-toggle.open .ht-arrow { transform: rotate(180deg); }
+.hint-body { display: none; font-size: 12px; color: var(--muted); padding: 8px 12px; background: var(--bg); border-radius: 8px; border-left: 3px solid var(--border); margin-bottom: 12px; line-height: 1.5; }
+.hint-body.show { display: block; }
+
+/* ─── PINYIN TOGGLE (reading passages) ─── */
+.pinyin-toggle-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.pinyin-toggle-label { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+.pinyin-switch { position: relative; display: inline-block; width: 38px; height: 22px; }
+.pinyin-switch input { opacity: 0; width: 0; height: 0; }
+.pinyin-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: var(--border); border-radius: 22px; transition: .2s; }
+.pinyin-slider:before { position: absolute; content: ''; height: 16px; width: 16px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: .2s; }
+.pinyin-switch input:checked + .pinyin-slider { background: var(--t3); }
+.pinyin-switch input:checked + .pinyin-slider:before { transform: translateX(16px); }
+
+/* ─── RESULT SCREEN ─── */
+.result { display: none; max-width: 620px; margin: 0 auto; padding: 2rem 1.5rem; text-align: center; }
+.result-ring { width: 110px; height: 110px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; font-size: 36px; font-weight: 700; }
+.ring-t1 { background: var(--t1l); color: var(--t1); border: 3px solid var(--t1m); }
+.ring-t2 { background: var(--t2l); color: var(--t2); border: 3px solid var(--t2m); }
+.ring-t3 { background: var(--t3l); color: var(--t3); border: 3px solid var(--t3m); }
+.result h2 { font-size: 22px; font-weight: 600; margin-bottom: 6px; }
+.result .r-sub { font-size: 14px; color: var(--muted); margin-bottom: 1.5rem; }
+.stars { font-size: 30px; margin-bottom: 1rem; letter-spacing: 4px; }
+.result-msg { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; font-size: 14px; text-align: left; line-height: 1.7; margin-bottom: 1.25rem; color: var(--text); }
+.result-msg strong { font-weight: 600; }
+.result-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.btn-retry { padding: 12px 28px; background: var(--text); color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+.btn-back { padding: 12px 28px; background: var(--card); border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; color: var(--text); }
+.btn-review { padding: 12px 28px; background: var(--t3l); border: 1.5px solid var(--t3m); border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; color: var(--t3); }
+.btn-download { padding: 12px 28px; background: var(--t2l); border: 1.5px solid var(--t2m); border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; color: var(--t2); }
+.btn-print { padding: 12px 28px; background: #f3e8ff; border: 1.5px solid #c4b5fd; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; color: #6d28d9; }
+.btn-print:hover { opacity: .88; }
+
+/* ─── ANSWER REVIEW PANEL ─── */
+.review-panel { display: none; text-align: left; margin-top: 1rem; }
+.review-panel h3 { font-size: 15px; font-weight: 600; margin-bottom: 12px; color: var(--text); }
+.review-item { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; font-size: 13px; line-height: 1.6; }
+.review-item .ri-q { color: var(--muted); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+.review-item .ri-stem { font-size: 14px; margin-bottom: 6px; }
+.review-item .ri-answer { display: flex; gap: 10px; flex-wrap: wrap; }
+.ri-tag { padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.ri-correct { background: var(--correctbg); color: var(--correct); }
+.ri-wrong { background: var(--wrongbg); color: var(--wrong); }
+.ri-open { background: var(--t3l); color: var(--t3); }
+.ri-user { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+
+/* ─── MOBILE DROPDOWNS (hidden on desktop) ─── */
+.mobile-select-wrap { display: none; }
+
+/* ─── STUDENT INFO SCREEN ─── */
+.student-info-screen { display: none; max-width: 580px; margin: 0 auto; padding: 3rem 1.5rem; }
+.si-card { background: var(--card); border: 1.5px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 2rem 2rem 1.75rem; }
+.si-title { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+.si-subtitle { font-size: 13px; color: var(--muted); margin-bottom: 1.75rem; }
+.si-field { margin-bottom: 1rem; }
+.si-label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 6px; display: block; }
+.si-input { width: 100%; border: 1.5px solid var(--border); border-radius: 10px; padding: 13px 16px; font-size: 16px; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); outline: none; transition: border-color .15s; }
+.si-input:focus { border-color: var(--text); background: var(--card); }
+.si-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 520px) { .si-row { grid-template-columns: 1fr; } }
+.si-note { font-size: 12px; color: var(--muted); margin-top: 0.75rem; line-height: 1.5; padding: 10px 12px; background: var(--bg); border-radius: 8px; }
+.si-start-btn { width: 100%; margin-top: 1.5rem; padding: 16px; background: var(--text); color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; display: flex; align-items: center; justify-content: center; gap: 10px; transition: opacity .15s; }
+.si-start-btn:hover { opacity: .88; }
+.si-back-link { text-align: center; margin-top: 1rem; font-size: 13px; color: var(--muted); cursor: pointer; text-decoration: underline; }
+.si-back-link:hover { color: var(--text); }
+
+/* ─── SOUND TOGGLE ─── */
+.sound-toggle-wrap { display: none; /* hidden; button moved into quiz-header */ }
+.sound-toggle-btn { background: none; border: 1.5px solid var(--border); border-radius: 20px; padding: 5px 12px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; color: var(--muted); transition: all .15s; display: flex; align-items: center; gap: 5px; }
+.sound-toggle-btn:hover { border-color: #aaa; color: var(--text); }
+
+/* ─── ANALYTICS PANEL (replaces review-panel) ─── */
+.analytics-panel { text-align: left; margin-top: 1.5rem; }
+.analytics-section { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+.analytics-section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: 1rem; display: flex; align-items: center; gap: 7px; }
+.analytics-q-row { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+.analytics-q-row:last-child { border-bottom: none; }
+.analytics-q-icon { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+.aq-correct { background: var(--correctbg); color: var(--correct); }
+.aq-wrong { background: var(--wrongbg); color: var(--wrong); }
+.aq-open { background: var(--t3l); color: var(--t3); }
+.analytics-q-body { flex: 1; }
+.analytics-q-num { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; }
+.analytics-q-stem { font-size: 14px; line-height: 1.5; margin-bottom: 4px; }
+.analytics-q-ans { display: flex; flex-wrap: wrap; gap: 6px; font-size: 12px; }
+.aq-tag { padding: 2px 9px; border-radius: 20px; font-weight: 600; }
+.aq-right-tag { background: var(--correctbg); color: var(--correct); }
+.aq-wrong-tag { background: var(--wrongbg); color: var(--wrong); }
+.aq-user-tag { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+.strength-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.strength-label { font-size: 13px; min-width: 90px; color: var(--text); }
+.strength-track { flex: 1; height: 10px; background: var(--border); border-radius: 5px; overflow: hidden; }
+.strength-fill-correct { height: 100%; background: var(--correct); border-radius: 5px; }
+.strength-fill-wrong { height: 100%; background: var(--wrong); border-radius: 5px; }
+.analytics-insight { font-size: 13px; line-height: 1.7; color: var(--text); }
+.analytics-insight strong { color: var(--t1); }
+.remedial-q { background: var(--bg); border: 1.5px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; }
+.remedial-q-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--t1); margin-bottom: 6px; }
+.remedial-q-stem { font-size: 15px; font-family: 'Noto Serif SC', serif; line-height: 1.5; margin-bottom: 10px; }
+.remedial-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+@media (max-width: 500px) { .remedial-choices { grid-template-columns: 1fr; } }
+.remedial-choice { padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; font-family: 'Noto Serif SC', serif; background: var(--card); cursor: pointer; display: flex; gap: 8px; transition: all .12s; }
+.remedial-choice:hover { border-color: #999; }
+.remedial-choice.rc-correct { background: var(--correctbg); border-color: var(--correct); color: var(--correct); }
+.remedial-choice.rc-wrong { background: var(--wrongbg); border-color: var(--wrong); color: var(--wrong); }
+.remedial-choice:disabled { cursor: default; }
+.btn-download-remedial { padding: 12px 28px; background: #fff7e6; border: 1.5px solid var(--gold); border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; color: #92700a; }
+.btn-download-remedial:hover { opacity: .88; }
+
+/* ─── STUDENT SURVEY (result page bottom) ─── */
+.student-survey { max-width: 860px; margin: 2rem auto 0; padding: 0 1.5rem 3rem; }
+.survey-card { background: var(--card); border: 1.5px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.75rem 2rem; }
+.survey-header { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; }
+.survey-icon { width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg,var(--t2) 0%,var(--t3) 100%); display: flex; align-items: center; justify-content: center; font-size: 19px; flex-shrink: 0; }
+.survey-title { font-size: 16px; font-weight: 600; }
+.survey-subtitle { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.survey-divider { border: none; border-top: 1.5px solid var(--border); margin: 1rem 0; }
+.survey-q { margin-bottom: 1.25rem; }
+.survey-q-label { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 8px; display: flex; gap: 5px; }
+.survey-required { color: var(--wrong); }
+.survey-options { display: flex; flex-wrap: wrap; gap: 7px; }
+.survey-option { padding: 7px 15px; border: 1.5px solid var(--border); border-radius: 20px; font-size: 13px; cursor: pointer; background: var(--bg); color: var(--text); transition: all .12s; user-select: none; }
+.survey-option:hover { border-color: #aaa; }
+.survey-option.selected { border-color: var(--t2); background: var(--t2l); color: var(--t2); font-weight: 600; }
+.survey-option.multi.selected { border-color: var(--t3); background: var(--t3l); color: var(--t3); font-weight: 600; }
+.survey-scale { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.survey-scale-label { font-size: 11px; color: var(--muted); }
+.survey-scale-btn { width: 38px; height: 38px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; background: var(--bg); color: var(--text); display: flex; align-items: center; justify-content: center; transition: all .12s; }
+.survey-scale-btn:hover { border-color: #aaa; }
+.survey-scale-btn.selected { border-color: var(--t2); background: var(--t2); color: #fff; }
+.survey-textarea { width: 100%; border: 1.5px solid var(--border); border-radius: 10px; padding: 11px 14px; font-size: 14px; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); outline: none; resize: vertical; min-height: 80px; transition: border-color .15s; }
+.survey-textarea:focus { border-color: #999; background: var(--card); }
+.survey-submit-btn { width: 100%; padding: 14px; background: var(--t2); color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; margin-top: 0.5rem; transition: opacity .15s; }
+.survey-submit-btn:hover { opacity: .88; }
+.survey-toggle-arrow { font-size: 14px; color: var(--muted); transition: transform .25s; flex-shrink: 0; margin-left: 4px; }
+.survey-toggle-header:hover .survey-title { color: var(--t2); }
+.survey-toggle-header { border-radius: 8px; padding: 4px; margin: -4px; transition: background .12s; }
+.survey-toggle-header:hover { background: var(--bg); }
+.survey-thanks { display: none; text-align: center; padding: 1.5rem 0 0.5rem; font-size: 15px; font-weight: 600; color: var(--correct); font-family: 'Noto Serif SC', serif; }
+.survey-thanks span { display: block; font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--muted); font-weight: 400; margin-top: 4px; }
+
+/* ─── MOBILE RESPONSIVE ─── */
+@media (max-width: 600px) {
+  /* Setup screen */
+  .setup { padding: 1.25rem 1rem; }
+  .brand h1 { font-size: 14px; }
+  .brand p { font-size: 11px; }
+
+  /* Hide grid/cards on mobile, show dropdowns instead */
+  .lesson-grid { display: none; }
+  .tier-grid { display: none; }
+  .mobile-select-wrap { display: block; margin-bottom: 1.25rem; }
+  .mobile-select {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 15px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    background: var(--card);
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237a7570' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    cursor: pointer;
+  }
+  .mobile-select:focus { border-color: #999; }
+
+  /* Tier grid: stack to single column on very small, 1-col stacked */
+  .tier-grid { grid-template-columns: 1fr; gap: 8px; }
+  .tier-card { padding: 12px; }
+  .tier-card .tc-cn { font-size: 14px; }
+  .tier-card .tc-desc { font-size: 11px; }
+
+  /* Quiz screen */
+  .quiz { padding: 1rem 0.875rem; }
+  .quiz-header { flex-wrap: wrap; gap: 6px; }
+  .q-counter { flex: 1; text-align: center; }
+  .timer-wrap { font-size: 13px; }
+
+  /* Question card */
+  .q-card { padding: 1rem; }
+  .q-stem { font-size: 19px; }
+
+  /* MC options: single column on mobile */
+  .options-grid { grid-template-columns: 1fr; }
+  .opt-btn { font-size: 15px; padding: 12px 13px; }
+  .opt-text { font-size: 16px; }
+
+  /* Match: single column stacked */
+  .match-wrap { grid-template-columns: 1fr; gap: 8px; }
+  .match-item { font-size: 15px; padding: 10px 12px; }
+
+  /* Fill input */
+  .fill-input { font-size: 17px; }
+
+  /* Reading passage */
+  .reading-passage { padding: 12px 14px; }
+  .w .ch { font-size: 15px; }
+  .w .py { font-size: 10px; }
+
+  /* Result screen */
+  .result { padding: 1.25rem 1rem; }
+  .result-btns { flex-direction: column; align-items: stretch; gap: 8px; }
+  .result-btns button { width: 100%; text-align: center; }
+  .result h2 { font-size: 19px; }
+  .result-ring { width: 90px; height: 90px; font-size: 28px; }
+
+  /* Feedback card */
+  .feedback-card { padding: 1.25rem 1rem 1rem; }
+  .feedback-bottom { flex-direction: column; align-items: stretch; }
+  .feedback-submit { width: 100%; text-align: center; padding: 12px; }
+}
+
+/* ─── VOCAB GLOSS BOX (above-level words in reading) ─── */
+.vocab-gloss {
+  background: #fffbea;
+  border: 1.5px solid #e8d87a;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-top: 8px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  color: #5a4e00;
+}
+.vocab-gloss-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: #b89a00;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.vocab-gloss-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+.vocab-gloss-item {
+  white-space: nowrap;
+}
+.vocab-gloss-item .vg-word {
+  font-family: 'Noto Serif SC', serif;
+  font-weight: 600;
+  font-size: 14px;
+  color: #3a3000;
+  margin-right: 3px;
+}
+.vocab-gloss-item .vg-level {
+  font-size: 10px;
+  background: #e8d87a;
+  color: #5a4e00;
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-weight: 700;
+  margin-right: 3px;
+}
+.vocab-gloss-item .vg-meaning {
+  color: #6b5c00;
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ SETUP ═══════════════ -->
+<div class="setup" id="setup">
+  <div class="brand">
+    <div class="brand-icon">跨</div>
+    <div>
+      <h1>跨越丝路分层习题生成器 · 2B</h1>
+      <p>Across the Silk Route · Book 2B · All 6 Lessons · Based on CCG &amp; HSK 3.0</p>
+    </div>
+  </div>
+  <div class="section-label">1 · Select lesson 选择课时</div>
+  <div class="lesson-grid" id="lessonGrid"></div>
+  <div class="mobile-select-wrap" id="lessonSelectWrap">
+    <select class="mobile-select" id="lessonSelect" onchange="selectLesson(parseInt(this.value))">
+      <option value="0">Lesson 1 · 饮食1 (你们想喝什么？Drinks)</option>
+      <option value="1">Lesson 2 · 饮食2 (我喜欢吃中国菜。Chinese Food)</option>
+      <option value="2">Lesson 3 · 饮食3 (你们早饭一般吃什么？Breakfast)</option>
+      <option value="3">Lesson 4 · 工作地点 (我现在在家上课。Work &amp; Study Places)</option>
+      <option value="4">Lesson 5 · 在饭店点餐 (请问你们要什么？Ordering Food)</option>
+      <option value="5">Lesson 6 · 购物1 (我买了一部手机。Shopping)</option>
+    </select>
+  </div>
+  <div class="section-label">2 · Select mastery tier 选择分层</div>
+  <div class="mobile-select-wrap" id="tierSelectWrap">
+    <select class="mobile-select" id="tierSelect" onchange="setTier(parseInt(this.value))">
+      <option value="0">Tier 1 · 迈向掌握 — Core vocabulary &amp; sentence patterns</option>
+      <option value="1">Tier 2 · 达到掌握 — Sentence usage + HSK 1 grammar</option>
+      <option value="2">Tier 3 · 深度掌握 — Extended + reading + critical thinking</option>
+    </select>
+  </div>
+  <div class="tier-grid">
+    <div class="tier-card t1 active" id="tc0" onclick="setTier(0)">
+      <div class="tc-level"><span class="tier-dot"></span>Tier 1</div>
+      <div class="tc-cn">迈向掌握</div>
+      <div class="tc-desc">10 questions · Core vocabulary &amp; sentence patterns · Working toward mastery</div>
+    </div>
+    <div class="tier-card t2" id="tc1" onclick="setTier(1)">
+      <div class="tc-level"><span class="tier-dot"></span>Tier 2</div>
+      <div class="tc-cn">达到掌握</div>
+      <div class="tc-desc">10 questions · Sentence usage + HSK 2 grammar · Working at mastery</div>
+    </div>
+    <div class="tier-card t3" id="tc2" onclick="setTier(2)">
+      <div class="tc-level"><span class="tier-dot"></span>Tier 3</div>
+      <div class="tc-cn">深度掌握</div>
+      <div class="tc-desc">10 questions · 5 extended + 4 reading comprehension + 1 critical thinking · Mastery with depth</div>
+    </div>
+  </div>
+  <button class="start-btn" onclick="goToStudentInfo()">
+    <span class="sb-cn">开始练习</span> · Start Quiz →
+  </button>
+
+  <p style="text-align:right; margin-top:1.5rem; font-size:11px; color:var(--muted); font-family:'DM Sans',sans-serif; opacity:0.7;">Designed by Sun Hao</p>
+
+</div>
+
+<!-- ═══════════════ STUDENT INFO SCREEN ═══════════════ -->
+<div class="student-info-screen" id="studentInfoScreen">
+  <div class="si-card">
+    <div class="si-title">🎒 学生信息 · Student Info</div>
+    <div class="si-subtitle">请填写以下信息，方便老师了解你的学习情况。Your info helps your teacher track your progress.</div>
+    <div class="si-field">
+      <label class="si-label">姓名 Full Name <span style="color:var(--wrong)">*</span></label>
+      <input class="si-input" id="si_name" type="text" placeholder="Your full name / 你的姓名" autocomplete="name">
+    </div>
+    <div class="si-row">
+      <div class="si-field">
+        <label class="si-label">班级 Class <span style="color:var(--wrong)">*</span></label>
+        <input class="si-input" id="si_class" type="text" placeholder="e.g. 7A, Grade 8B">
+      </div>
+      <div class="si-field">
+        <label class="si-label">学校 School</label>
+        <input class="si-input" id="si_school" type="text" placeholder="School name / 学校名称">
+      </div>
+    </div>
+    <div class="si-note">ℹ️ 姓名和班级为必填项。信息仅用于学情记录，不作其他用途。<br>Name and class are required. Info is used for learning records only.</div>
+    <button class="si-start-btn" onclick="confirmStudentInfo()">
+      <span style="font-family:'Noto Serif SC',serif;">确认并开始</span> · Confirm &amp; Start →
+    </button>
+    <div class="si-back-link" onclick="backToSetup()">← 返回 · Back to settings</div>
+  </div>
+</div>
+
+<!-- ═══════════════ QUIZ ═══════════════ -->
+<div class="quiz" id="quizScreen">
+  <div class="quiz-header">
+    <span class="tier-badge" id="qBadge">Tier 1</span>
+    <span class="q-counter" id="qCounter">1 / 10</span>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <button class="sound-toggle-btn" onclick="toggleSound()" id="soundBtn">🔊 Sound ON</button>
+      <button class="exit-btn" onclick="exitQuiz()" title="返回设置 Back to Setting">← 返回设置 Back to Setting</button>
+    </div>
+    <div class="timer-wrap" id="timerWrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span id="timerDisplay">15:00</span>
+    </div>
+  </div>
+  <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+  <div id="qMount"></div>
+</div>
+
+<!-- ═══════════════ RESULT ═══════════════ -->
+<div class="result" id="resultScreen">
+  <div class="result-ring" id="rRing"></div>
+  <h2 id="rTitle">Well done!</h2>
+  <p class="r-sub" id="rSub"></p>
+  <div class="stars" id="rStars"></div>
+  <div class="result-msg" id="rMsg"></div>
+  <div class="result-btns">
+    <button class="btn-retry" onclick="retry()">再试一次 Retry</button>
+    <button class="btn-download" onclick="downloadAnswers()">⬇ 下载答案 Download</button>
+    <button class="btn-download-remedial" onclick="downloadRemedial()">📥 下载补弱练习 Remedial</button>
+    <button class="btn-print" onclick="printWorksheet()">🖨 下载试卷 Print PDF</button>
+    <button class="btn-back" onclick="goBack()">← Change settings</button>
+  </div>
+  <div class="analytics-panel" id="analyticsPanel"></div>
+</div>
+
+<!-- ═══════════════ STUDENT SURVEY (result page bottom, collapsed) ═══════════════ -->
+<div class="student-survey" id="studentSurveyWrap" style="display:none;">
+  <div class="survey-card">
+
+    <!-- ── Clickable collapsed header ── -->
+    <div class="survey-toggle-header" onclick="toggleSurveyBody()" id="surveyToggleHeader">
+      <div class="survey-header" style="margin-bottom:0; cursor:pointer;">
+        <div class="survey-icon">📝</div>
+        <div style="flex:1;">
+          <div class="survey-title">学生反馈问卷 · Student Feedback Survey</div>
+          <div class="survey-subtitle">点击展开 · 帮助老师改进课堂，只需2分钟 · Click to expand</div>
+        </div>
+        <span class="survey-toggle-arrow" id="surveyArrow">▼</span>
+      </div>
+    </div>
+
+    <!-- ── Collapsible body — hidden by default ── -->
+    <div id="surveyBody" style="display:none;">
+      <hr class="survey-divider">
+      <div class="survey-q" id="sq1">
+        <div class="survey-q-label">1. 你觉得这个分层练习怎么样？How do you find this tiered quiz overall? <span class="survey-required">*</span></div>
+        <div class="survey-scale">
+          <span class="survey-scale-label">很差 Poor</span>
+          <button class="survey-scale-btn" onclick="selectScale('sq1',1)">1</button>
+          <button class="survey-scale-btn" onclick="selectScale('sq1',2)">2</button>
+          <button class="survey-scale-btn" onclick="selectScale('sq1',3)">3</button>
+          <button class="survey-scale-btn" onclick="selectScale('sq1',4)">4</button>
+          <button class="survey-scale-btn" onclick="selectScale('sq1',5)">5</button>
+          <span class="survey-scale-label">很好 Excellent</span>
+        </div>
+      </div>
+      <div class="survey-q" id="sq2">
+        <div class="survey-q-label">2. 这个练习是否有针对性？Does this practice feel targeted to your level? <span class="survey-required">*</span></div>
+        <div class="survey-options">
+          <span class="survey-option" onclick="selectSingle('sq2',this)">非常有针对性 Very targeted</span>
+          <span class="survey-option" onclick="selectSingle('sq2',this)">比较有针对性 Fairly targeted</span>
+          <span class="survey-option" onclick="selectSingle('sq2',this)">一般 So-so</span>
+          <span class="survey-option" onclick="selectSingle('sq2',this)">针对性不强 Not very targeted</span>
+        </div>
+      </div>
+      <div class="survey-q" id="sq3">
+        <div class="survey-q-label">3. 对你的HSK考试是否有帮助？Does this help with your HSK preparation? <span class="survey-required">*</span></div>
+        <div class="survey-options">
+          <span class="survey-option" onclick="selectSingle('sq3',this)">很有帮助 Very helpful</span>
+          <span class="survey-option" onclick="selectSingle('sq3',this)">有些帮助 Somewhat helpful</span>
+          <span class="survey-option" onclick="selectSingle('sq3',this)">帮助不大 Not much help</span>
+          <span class="survey-option" onclick="selectSingle('sq3',this)">没有帮助 Not helpful</span>
+        </div>
+      </div>
+      <div class="survey-q" id="sq4">
+        <div class="survey-q-label">4. 对掌握学习重点是否有帮助？Does it help you master the key learning points? <span class="survey-required">*</span></div>
+        <div class="survey-options">
+          <span class="survey-option" onclick="selectSingle('sq4',this)">非常有帮助 Very much</span>
+          <span class="survey-option" onclick="selectSingle('sq4',this)">有帮助 Helpful</span>
+          <span class="survey-option" onclick="selectSingle('sq4',this)">一般 Average</span>
+          <span class="survey-option" onclick="selectSingle('sq4',this)">帮助不大 Not much</span>
+        </div>
+      </div>
+      <div class="survey-q" id="sq5">
+        <div class="survey-q-label">5. 你最不喜欢哪种题型？Which question type do you like LEAST? <span class="survey-required">*</span></div>
+        <div class="survey-options">
+          <span class="survey-option" onclick="selectSingle('sq5',this)">选择题 Multiple Choice</span>
+          <span class="survey-option" onclick="selectSingle('sq5',this)">填空题 Fill-in</span>
+          <span class="survey-option" onclick="selectSingle('sq5',this)">连线题 Matching</span>
+          <span class="survey-option" onclick="selectSingle('sq5',this)">阅读题 Reading</span>
+          <span class="survey-option" onclick="selectSingle('sq5',this)">思维题 HOTS</span>
+        </div>
+      </div>
+      <div class="survey-q" id="sq6">
+        <div class="survey-q-label">6. 你最喜欢哪种题型？Which question type do you like MOST? <span class="survey-required">*</span></div>
+        <div class="survey-options">
+          <span class="survey-option" onclick="selectSingle('sq6',this)">选择题 Multiple Choice</span>
+          <span class="survey-option" onclick="selectSingle('sq6',this)">填空题 Fill-in</span>
+          <span class="survey-option" onclick="selectSingle('sq6',this)">连线题 Matching</span>
+          <span class="survey-option" onclick="selectSingle('sq6',this)">阅读题 Reading</span>
+          <span class="survey-option" onclick="selectSingle('sq6',this)">思维题 HOTS</span>
+        </div>
+      </div>
+      <div class="survey-q">
+        <div class="survey-q-label">7. 你还有什么意见和建议？（选填）Any other suggestions? <span style="color:var(--muted);font-weight:400;">Optional</span></div>
+        <textarea class="survey-textarea" id="survey_suggestions" placeholder="请写下你的想法 / Share your thoughts here…"></textarea>
+      </div>
+      <div id="surveyForm_submit">
+        <button class="survey-submit-btn" onclick="submitStudentSurvey()">提交反馈 Submit Feedback 📤</button>
+      </div>
+      <div class="survey-thanks" id="surveyThanks">
+        🎉 感谢你的反馈！Thank you for your feedback!
+        <span>老师会认真阅读你的意见，帮助改进课堂练习。Your teacher will review your responses. 🙏</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// DATA — 跨越丝路 2B · 6 Lessons · CCG + HSK 3.0
+// Tier 1: 10 core questions (mc / fill / match)
+// Tier 2: 10 questions with HSK 1 grammar integration
+// Tier 3: 5 extended + 4 reading comprehension + 1 HOTS
+//   type:'reading' — passage shown above q, mc underneath
+//   type:'hots'    — open-ended critical/creative thinking
+// ══════════════════════════════════════════════════════════════════
+
+const LESSONS = [
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// LESSON 1 · 你们想喝什么？饮食1
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{ id:'2B-L1', num:'Lesson 1', title:'你们想喝什么？Drinks', cn:'饮食1',
+  tiers:[
+  // TIER 1 — 10 questions
+  { qs:[
+    { type:'mc', stem:'<span class="cn">你们想喝什么？</span> means:', choices:['What do you all want to drink?','What do you want to eat?','Do you like tea?','What are you buying?'], ans:0, hint:'想 = want to, 喝 = drink, 什么 = what' },
+    { type:'mc', stem:'Which word means "water" in Chinese?', choices:['水','茶','咖啡','牛奶'], ans:0, hint:'水 shuǐ — the most basic drink' },
+    { type:'mc', stem:'<span class="cn">我想喝可乐。</span> means:', choices:['I want to drink cola.','I want to eat cola.','Do you want cola?','I have cola.'], ans:0, hint:'我想喝 = I want to drink; 可乐 = cola' },
+    { type:'mc', stem:'Which is a HOT drink commonly served in China?', choices:['茶','可乐','果汁','牛奶'], ans:0, hint:'茶 chá = tea — China\'s most famous drink' },
+    { type:'mc', stem:'<span class="cn">瓶</span> is the measure word for:', choices:['bottled drinks','cups of tea','glasses of juice','bags of snacks'], ans:0, hint:'一瓶可乐 = one bottle of cola; 瓶 = bottle' },
+    { type:'mc', stem:'<span class="cn">杯</span> is the measure word for:', choices:['cups / glasses','bottles','bowls','cans'], ans:0, hint:'一杯茶 = one cup of tea; 一杯水 = one glass of water' },
+    { type:'fill', stem:'Complete: <span class="cn">我想喝一＿＿果汁。</span> (I want to drink a glass of juice.)', ans:['杯'], hint:'杯 = cup/glass — measure word for drinks served in a cup' },
+    { type:'match', stem:'Match Chinese drink to English', left:['茶','咖啡','果汁','牛奶'], right:['tea','coffee','juice','milk'], pairs:[[0,0],[1,1],[2,2],[3,3]], hint:'Core drinks vocabulary from Lesson 1' },
+    { type:'mc', stem:'Culture: Which tea region is China most famous for?', choices:['Many regions — Longjing (龙井) from Hangzhou, Pu\'er from Yunnan','Dubai only produces coffee','China only grows coffee','Tea is not important in China'], ans:0, hint:'中国的茶文化 — China has many famous teas from different regions' },
+    { type:'fill', stem:'Say "I want to drink tea": <span class="cn">我想喝＿＿。</span>', ans:['茶'], hint:'茶 = tea — one of China\'s most iconic drinks' },
+  ]},
+  // TIER 2 — 10 questions
+  { qs:[
+    { type:'mc', stem:'In HSK grammar, <span class="cn">想</span> in 你想喝什么 is a(n):', choices:['能愿动词 (modal verb = want to)','形容词 (adjective)','名词 (noun)','副词 (adverb)'], ans:0, hint:'HSK2: 想 is a modal/auxiliary verb (能愿动词) — 想 + verb = want to do sth' },
+    { type:'mc', stem:'<span class="cn">你们想喝什么？</span> — 你们 uses the suffix:', choices:['们 (plural suffix for people)','也 (adverb)','都 (scope adverb)','吗 (question particle)'], ans:0, hint:'HSK2: 们 is a 后缀 (suffix) that makes pronouns plural — 你们, 我们, 他们' },
+    { type:'fill', stem:'Make it plural: <span class="cn">他→他＿＿</span> (they)', ans:['们'], hint:'们 suffix: 他们 = they (male/mixed), 她们 = they (female)' },
+    { type:'mc', stem:'<span class="cn">你们想喝什么？</span> is a:', choices:['特指问句 (Wh-question using 什么)','是非问句 (Yes/No with 吗)','正反问句 (A-not-A question)','选择问句 (Either-or question)'], ans:0, hint:'什么 replaces the unknown item — this is a 特指问句 (wh-question)' },
+    { type:'mc', stem:'Which sentence correctly uses <span class="cn">想</span>?', choices:['我想喝咖啡。','我是想咖啡。','咖啡想我喝。','喝想咖啡我。'], ans:0, hint:'Pattern: Subject + 想 + Verb + Object — 我(S)想(modal)喝(V)咖啡(O)' },
+    { type:'match', stem:'Match measure word to its drink context', left:['杯','瓶','罐','壶'], right:['cup/glass of tea','bottle of water','can of cola','pot of tea'], pairs:[[0,0],[1,1],[2,2],[3,3]], hint:'Different containers for drinks have different measure words (量词)' },
+    { type:'mc', stem:'<span class="cn">我想喝茶，你呢？</span> — 你呢 is asking:', choices:['What about you? (echo question)','Are you a tea drinker?','Do you agree?','Is tea ready?'], ans:0, hint:'HSK1: 呢 as 语气助词 — returns the question to the listener' },
+    { type:'fill', stem:'Complete: <span class="cn">A:你想喝什么？ B:我想喝一＿＿咖啡。</span>', ans:['杯'], hint:'一杯咖啡 = a cup of coffee — 杯 is the measure word' },
+    { type:'mc', stem:'<span class="cn">想</span> vs <span class="cn">要</span> — in drink ordering, the main difference is:', choices:['Both express desire; 想 is softer/more polite; 要 is more direct','想 means "to think"; 要 means "to drink"','They cannot be used for drinks','想 is for food; 要 is for drinks only'], ans:0, hint:'想: I\'d like to; 要: I want/will have — 要 is the direct ordering word' },
+    { type:'mc', stem:'Culture: 中国的茶文化 — Chinese tea culture includes:', choices:['Gongfu tea ceremony, specific teaware, various tea types by region','Only drinking tea in restaurants','Tea as a Western import','Tea only served cold'], ans:0, hint:'茶文化 is ancient and elaborate — includes rituals, teaware, and regional varieties' },
+  ]},
+  // TIER 3 — 5 extended + reading (4) + HOTS (1)
+  { qs:[
+    { type:'mc', stem:'<span class="cn">你们想喝什么？</span> — Why is 们 added to 你 here?', choices:['The speaker is addressing a group, not just one person','们 is always used with 你','们 makes the sentence more polite','们 indicates a question'], ans:0, hint:'你们 = you (plural); 你 = you (singular) — 们 marks plurality for people' },
+    { type:'mc', stem:'The modal verb 想 expresses:', choices:['A desire or intention (want to / would like to)','A completed action','A prohibition','A location'], ans:0, hint:'能愿动词 想 — expresses desire: 想+verb = want/would like to do sth' },
+    { type:'fill', stem:'Say "We all want to drink tea": <span class="cn">我们＿＿想喝茶。</span>', ans:['都'], hint:'都 (scope adverb) = all — covers the whole group 我们' },
+    { type:'mc', stem:'Why does Chinese use 杯 (cup) as a measure word for drinks but English just says "a tea"?', choices:['Chinese requires measure words (量词) between number and noun for all countable items','Chinese has no grammar','Only drinks need measure words in Chinese','杯 is a verb in Chinese'], ans:0, hint:'HSK1/2: 量词 are required in Chinese for number + noun: 一杯茶, 两瓶水' },
+    { type:'mc', stem:'In ordering drinks in Chinese, the pattern is:', choices:['我想/要 + 一 + 量词 + drink','我是 + drink','我有 + drink','Drink + 我想喝'], ans:0, hint:'Ordering pattern: 我想要一杯茶 / 给我一瓶水' },
+    // READING Q6–Q9
+    { type:'reading',
+      passage:'今天天气很热。小华和阿里在学校的小卖部。小卖部有很多饮料：水、茶、果汁、牛奶、可乐。小华说："我想喝一杯绿茶，因为绿茶对身体好。"阿里说："我想喝可乐，因为可乐很好喝。"服务员问："你们还要别的吗？"小华说："我还想要一瓶水。"服务员说："好的，一共十五块。"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What drink does Xiao Hua choose and why?',
+      choices:['Green tea — because it is good for health','Cola — because it is delicious','Water — because it is cheap','Juice — because it is sweet'],
+      ans:0, hint:'小华说：我想喝一杯绿茶，因为绿茶对身体好' },
+    { type:'reading',
+      passage:'今天天气很热。小华和阿里在学校的小卖部。小卖部有很多饮料：水、茶、果汁、牛奶、可乐。小华说："我想喝一杯绿茶，因为绿茶对身体好。"阿里说："我想喝可乐，因为可乐很好喝。"服务员问："你们还要别的吗？"小华说："我还想要一瓶水。"服务员说："好的，一共十五块。"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What does Xiao Hua order in addition to green tea?',
+      choices:['A bottle of water / 一瓶水','A cup of juice / 一杯果汁','A cup of milk / 一杯牛奶','A can of cola / 一罐可乐'],
+      ans:0, hint:'我还想要一瓶水 — 还 = also/additionally' },
+    { type:'reading',
+      passage:'今天天气很热。小华和阿里在学校的小卖部。小卖部有很多饮料：水、茶、果汁、牛奶、可乐。小华说："我想喝一杯绿茶，因为绿茶对身体好。"阿里说："我想喝可乐，因为可乐很好喝。"服务员问："你们还要别的吗？"小华说："我还想要一瓶水。"服务员说："好的，一共十五块。"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'How much do they pay in total?',
+      choices:['15 yuan / 十五块','10 yuan / 十块','20 yuan / 二十块','8 yuan / 八块'],
+      ans:0, hint:'一共十五块 — 一共 = in total' },
+    { type:'reading',
+      passage:'今天天气很热。小华和阿里在学校的小卖部。小卖部有很多饮料：水、茶、果汁、牛奶、可乐。小华说："我想喝一杯绿茶，因为绿茶对身体好。"阿里说："我想喝可乐，因为可乐很好喝。"服务员问："你们还要别的吗？"小华说："我还想要一瓶水。"服务员说："好的，一共十五块。"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What reason does Ali give for choosing cola?',
+      choices:['Because it tastes good (很好喝)','Because it is cheap','Because it is healthy','Because he always drinks cola'],
+      ans:0, hint:'阿里说：我想喝可乐，因为可乐很好喝' },
+    // HOTS Q10
+    { type:'hots',
+      stem:'In China, tea (茶) is deeply connected to culture, hospitality, and health. In the UAE and Arab culture, coffee (قهوة) and tea also have important cultural roles. <span class="cn">在中国，茶文化非常重要；在阿联酋，咖啡文化也很重要。</span> Compare the role of tea or coffee in Chinese and Emirati culture. What similarities do you see? What differences? If you had to choose ONE drink to represent your culture, what would it be and why?',
+      prompts:[
+        'Think: why is green tea served in formal meetings in China? Why is Arabic coffee (qahwa) served to guests in the UAE?',
+        'What does a drink tell us about a culture\'s values — hospitality, health, social bonding?',
+        'If a Chinese guest came to your home, what drink would you offer? If you visited a Chinese home, what might they offer you?'
+      ],
+      hint:'Use specific cultural examples from both China and the UAE in your answer.' },
+  ]},
+]},
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// LESSON 2 · 我喜欢吃中国菜。饮食2
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{ id:'2B-L2', num:'Lesson 2', title:'我喜欢吃中国菜。Chinese Food', cn:'饮食2',
+  tiers:[
+  { qs:[
+    { type:'mc', stem:'<span class="cn">你喜欢吃什么？</span> means:', choices:['What do you like to eat?','What do you want to drink?','Do you like Chinese food?','What can you cook?'], ans:0, hint:'喜欢 = to like, 吃 = to eat, 什么 = what' },
+    { type:'mc', stem:'Which word means "rice" in Chinese?', choices:['米饭','面条','包子','炒饭'], ans:0, hint:'米饭 mǐfàn = cooked rice — the staple grain of southern China' },
+    { type:'mc', stem:'<span class="cn">炒面</span> means:', choices:['fried noodles','fried rice','steamed bread','dumplings'], ans:0, hint:'炒 = stir-fry, 面 = noodles; 炒面 = stir-fried noodles' },
+    { type:'mc', stem:'<span class="cn">包子</span> are:', choices:['steamed buns with filling','fried dumplings','cold noodles','spring rolls'], ans:0, hint:'包子 bāozi = steamed stuffed buns — popular breakfast in northern China' },
+    { type:'mc', stem:'<span class="cn">好吃</span> means:', choices:['delicious / tasty','good-looking','easy to make','popular'], ans:0, hint:'好 = good, 吃 = to eat; 好吃 = tastes good / delicious' },
+    { type:'mc', stem:'<span class="cn">我喜欢吃中国菜。</span> — which word means "Chinese cuisine"?', choices:['中国菜','炒饭','包子','面条'], ans:0, hint:'中国菜 = Chinese food/cuisine; 菜 = dish/vegetable/food' },
+    { type:'fill', stem:'Say "I like to eat noodles": <span class="cn">我喜欢吃＿＿＿。</span>', ans:['面条'], hint:'面条 miàntiáo = noodles — a staple in northern China' },
+    { type:'match', stem:'Match Chinese food to English', left:['米饭','炒饭','面条','包子'], right:['steamed rice','fried rice','noodles','steamed buns'], pairs:[[0,0],[1,1],[2,2],[3,3]], hint:'Core food vocabulary for Lesson 2' },
+    { type:'mc', stem:'Culture: China\'s north and south differ in staple foods. Southern China primarily eats:', choices:['Rice (米饭)','Noodles (面条)','Steamed buns (馒头)','Dumplings (饺子)'], ans:0, hint:'中国的南北饮食差异：南方吃米，北方吃面' },
+    { type:'fill', stem:'Complete: <span class="cn">炒饭很＿＿吃。</span> (Fried rice is delicious.)', ans:['好'], hint:'好吃 = delicious — 好 + 吃 compound adjective' },
+  ]},
+  { qs:[
+    { type:'mc', stem:'<span class="cn">我喜欢吃中国菜。</span> — 喜欢 functions as:', choices:['动词 (verb = to like)','形容词 (adjective)','能愿动词 (modal verb)','副词 (adverb)'], ans:0, hint:'喜欢 is a psychological/cognitive verb (心理动词) — expresses preference' },
+    { type:'mc', stem:'The negative of 喜欢吃 is:', choices:['不喜欢吃','没喜欢吃','不吃喜欢','喜欢不吃'], ans:0, hint:'Stative/cognitive verbs negate with 不 — 不喜欢 = don\'t like' },
+    { type:'mc', stem:'<span class="cn">你喜欢吃什么？</span> vs <span class="cn">你喜欢吃中国菜吗？</span> — the difference is:', choices:['第一个是特指问句; 第二个是是非问句','They are the same type','第一个 uses 吗; 第二个 uses 什么','Both are yes/no questions'], ans:0, hint:'什么 → 特指问句 (open); 吗 → 是非问句 (yes/no)' },
+    { type:'fill', stem:'Complete: <span class="cn">A:你喜欢吃什么？ B:我喜欢吃米饭，你＿＿？</span>', ans:['呢'], hint:'呢 echoes the question back: "And you? What about you?"' },
+    { type:'mc', stem:'<span class="cn">行</span> in 中国菜行不行？ means:', choices:['OK / will do','to walk','a profession','a number'], ans:0, hint:'行 = OK, acceptable — used in A-not-A question 行不行? = Is it OK?' },
+    { type:'mc', stem:'The sentence pattern <span class="cn">Subject + 喜欢 + Verb + Object</span> follows:', choices:['SVO order with a psychological verb','SOV order','VSO order','OSV order'], ans:0, hint:'我(S)喜欢(V1)吃(V2)中国菜(O) — 连动句 with 喜欢 as main verb' },
+    { type:'match', stem:'Match food character to its meaning', left:['炒','蒸','面','菜'], right:['stir-fry','steam','noodles/flour','dish/vegetable'], pairs:[[0,0],[1,1],[2,2],[3,3]], hint:'Understanding cooking method characters helps decode Chinese menu items' },
+    { type:'mc', stem:'<span class="cn">学</span> in 我们学中国菜 means:', choices:['to learn (a skill)','to study books','to go to school','to teach'], ans:0, hint:'学 = to learn — used here as "learn how to cook Chinese food"' },
+    { type:'mc', stem:'Culture: Which of the following is a famous dish of Cantonese (广东) cuisine?', choices:['Dim sum (点心)','Beijing duck (北京烤鸭)','Kung Pao chicken (宫保鸡丁)','Mapo tofu (麻婆豆腐)'], ans:0, hint:'中国八大菜系 — Cantonese (粤菜) is famous for dim sum and seafood' },
+    { type:'fill', stem:'Say "Fried rice tastes good": <span class="cn">炒饭很好＿＿。</span>', ans:['吃'], hint:'好吃 = delicious — 好 + 吃 compound adjective meaning "tastes good"' },
+  ]},
+  { qs:[
+    { type:'mc', stem:'<span class="cn">我喜欢吃中国菜。</span> — why does this NOT need 想 or 要?', choices:['喜欢 already expresses preference; 想/要 express desire/intention','喜欢 is a question word','想 and 要 are required','This sentence is incorrect without 想'], ans:0, hint:'喜欢 = like (general preference); 想/要 = want to (specific intention right now)' },
+    { type:'mc', stem:'<span class="cn">家人</span> in 和家人一起吃饭 is used because:', choices:['家人 = family members — a collective noun for the whole family','家 = home','家 and 人 are unrelated here','家人 = housemates'], ans:0, hint:'家人 = family members; 一起 = together; 和 = with (介词)' },
+    { type:'fill', stem:'Say "I like eating Chinese food very much": <span class="cn">我非常喜欢吃中国＿＿。</span>', ans:['菜'], hint:'中国菜 = Chinese cuisine/dishes' },
+    { type:'mc', stem:'China\'s culinary philosophy (饮食哲学) emphasises:', choices:['Balance of flavours, nutrition, and the importance of eating together','Eating alone is better','Only stir-frying is authentic','Fast food is preferred'], ans:0, hint:'家人一起吃饭, 色香味 (colour, aroma, taste) — core values of Chinese food culture' },
+    { type:'mc', stem:'The cultural concept <span class="cn">民以食为天</span> (food is paramount to the people) suggests:', choices:['Food is central to Chinese culture and daily life','Chinese people only eat Chinese food','Cooking is a school subject','Restaurants are more important than families'], ans:0, hint:'民以食为天 — an ancient saying showing food\'s central role in Chinese civilisation' },
+    // READING
+    { type:'reading',
+      passage:'我叫小美，我是中国人。我非常喜欢吃中国菜，特别是炒饭和面条。中国南方的人喜欢吃米饭，北方的人喜欢吃面条和包子。我来自广东，所以我最喜欢吃粤菜。我的朋友阿里来自阿联酋，他说他很喜欢吃中国菜，他觉得炒饭非常好吃。他说阿联酋菜也很好吃，有很多香料。我想学做中国菜，也想学做阿联酋菜！',
+      passageLabel:'Reading · 阅读理解',
+      stem:'Which part of China does Xiao Mei come from?',
+      choices:['Guangdong (广东) / south China','Beijing / north China','Shanghai / east China','Sichuan / west China'],
+      ans:0, hint:'我来自广东，所以我最喜欢吃粤菜' },
+    { type:'reading',
+      passage:'我叫小美，我是中国人。我非常喜欢吃中国菜，特别是炒饭和面条。中国南方的人喜欢吃米饭，北方的人喜欢吃面条和包子。我来自广东，所以我最喜欢吃粤菜。我的朋友阿里来自阿联酋，他说他很喜欢吃中国菜，他觉得炒饭非常好吃。他说阿联酋菜也很好吃，有很多香料。我想学做中国菜，也想学做阿联酋菜！',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What does Ali think of fried rice?',
+      choices:['He thinks it is very delicious (非常好吃)','He doesn\'t like it','He thinks it is too oily','He prefers noodles'],
+      ans:0, hint:'他觉得炒饭非常好吃' },
+    { type:'reading',
+      passage:'我叫小美，我是中国人。我非常喜欢吃中国菜，特别是炒饭和面条。中国南方的人喜欢吃米饭，北方的人喜欢吃面条和包子。我来自广东，所以我最喜欢吃粤菜。我的朋友阿里来自阿联酋，他说他很喜欢吃中国菜，他觉得炒饭非常好吃。他说阿联酋菜也很好吃，有很多香料。我想学做中国菜，也想学做阿联酋菜！',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What characterises Emirati food according to Ali?',
+      choices:['It has many spices (香料)','It is the same as Chinese food','It has no flavour','It is mostly sweet'],
+      ans:0, hint:'阿联酋菜也很好吃，有很多香料' },
+    { type:'reading',
+      passage:'我叫小美，我是中国人。我非常喜欢吃中国菜，特别是炒饭和面条。中国南方的人喜欢吃米饭，北方的人喜欢吃面条和包子。我来自广东，所以我最喜欢吃粤菜。我的朋友阿里来自阿联酋，他说他很喜欢吃中国菜，他觉得炒饭非常好吃。他说阿联酋菜也很好吃，有很多香料。我想学做中国菜，也想学做阿联酋菜！',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What does Xiao Mei want to learn to do?',
+      choices:['Cook both Chinese and Emirati food','Only cook Chinese food','Go to culinary school','Open a restaurant'],
+      ans:0, hint:'我想学做中国菜，也想学做阿联酋菜！' },
+    { type:'hots',
+      stem:'Xiao Mei loves Chinese food; Ali loves both Chinese and Emirati food. Both cuisines are rich in culture and history. <span class="cn">饮食文化是了解一个国家的好方法。</span> In your opinion, what can you learn about a country from its food? Use specific examples from Chinese cuisine and Emirati cuisine. Is food the best way to understand a culture?',
+      prompts:[
+        'Think: what does Chinese stir-frying (快速炒) tell you about the Chinese lifestyle? What do Emirati spices tell you about trade history?',
+        'Why do northern Chinese eat more noodles and southern Chinese eat more rice? What does geography have to do with food?',
+        'If you could introduce ONE Emirati dish to a Chinese person, what would it be and how would you explain it?'
+      ],
+      hint:'Use both food knowledge and cultural reasoning in your answer.' },
+  ]},
+]},
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// LESSON 3 · 你们早饭一般吃什么？饮食3
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{ id:'2B-L3', num:'Lesson 3', title:'你们早饭一般吃什么？Breakfast', cn:'饮食3',
+  tiers:[
+  { qs:[
+    { type:'mc', stem:'<span class="cn">早饭</span> means:', choices:['breakfast','lunch','dinner','snack'], ans:0, hint:'早 = early/morning, 饭 = meal; 早饭 = morning meal = breakfast' },
+    { type:'mc', stem:'<span class="cn">一般</span> in 一般吃什么 means:', choices:['usually / generally','one kind of','especially','always'], ans:0, hint:'一般 = usually/in general — describes a habitual action' },
+    { type:'mc', stem:'<span class="cn">午饭</span> means:', choices:['lunch','breakfast','dinner','brunch'], ans:0, hint:'午 = noon; 午饭 = noon meal = lunch' },
+    { type:'mc', stem:'Which food is a typical Chinese breakfast item?', choices:['包子','汉堡包','沙拉','披萨饼'], ans:0, hint:'包子 (steamed buns) are a classic Northern Chinese breakfast food' },
+    { type:'mc', stem:'<span class="cn">晚饭</span> means:', choices:['dinner','breakfast','lunch','supper only'], ans:0, hint:'晚 = evening/night; 晚饭 = evening meal = dinner' },
+    { type:'mc', stem:'<span class="cn">或者</span> means:', choices:['or (in statements)','and','but','also'], ans:0, hint:'或者 = or — used in statements; 还是 = or — used in questions' },
+    { type:'fill', stem:'Complete: <span class="cn">我早饭＿＿＿吃面条。</span> (I usually eat noodles for breakfast.)', ans:['一般'], hint:'一般 = usually/generally — describes a habit' },
+    { type:'match', stem:'Match meal names', left:['早饭','午饭','晚饭','方便面'], right:['breakfast','lunch','dinner','instant noodles'], pairs:[[0,0],[1,1],[2,2],[3,3]], hint:'Meal vocabulary and food items from Lesson 3' },
+    { type:'mc', stem:'Culture: What does 中国的八大菜系 refer to?', choices:['The Eight Great Regional Cuisines of China','Eight types of breakfast','Eight cooking methods','Eight famous restaurants'], ans:0, hint:'八大菜系 = 8 regional cuisine systems: Cantonese, Sichuan, Shandong, etc.' },
+    { type:'fill', stem:'Say "I generally eat bread for breakfast": <span class="cn">我早饭一般吃＿＿＿。</span>', ans:['面包'], hint:'面包 miànbāo = bread' },
+  ]},
+  { qs:[
+    { type:'mc', stem:'<span class="cn">我早饭一般吃面条。</span> — 一般 functions as:', choices:['频率副词 (frequency adverb = usually)','时间状语 (time adverbial)','结果补语 (result complement)','语气助词 (modal particle)'], ans:0, hint:'HSK3: 一般 as frequency adverb: usually/generally — placed before the verb' },
+    { type:'mc', stem:'<span class="cn">或者</span> vs <span class="cn">还是</span> — key rule:', choices:['或者 is used in statements; 还是 is used in questions','They are completely interchangeable','还是 is used in statements; 或者 is in questions','Both can appear in both contexts'], ans:0, hint:'HSK2/3: 或者 = or (declarative); 还是 = or (interrogative/choice question)' },
+    { type:'fill', stem:'Complete with the correct "or": <span class="cn">你早饭吃包子＿＿面条？</span>', ans:['还是'], hint:'This is a choice question (选择问句) → use 还是' },
+    { type:'mc', stem:'Which sentence correctly uses 一般?', choices:['我一般吃早饭。','早饭一般我吃。','我吃一般早饭。','一般我是吃早饭。'], ans:0, hint:'一般 comes before the verb phrase it modifies: 我(S)一般(adv)吃(V)早饭(O)' },
+    { type:'mc', stem:'The sentence <span class="cn">我早饭一般吃面条或者包子。</span> uses 或者 because:', choices:['It is a statement (not a question), so 或者 is correct','或者 is only for questions','还是 would also work here','It is a mistake'], ans:0, hint:'或者 in statements: 我吃面条或者包子 = I eat noodles or steamed buns (not a question)' },
+    { type:'mc', stem:'In Chinese, meal times in sentences follow this order:', choices:['Subject + Time (meal) + Frequency adverb + Verb + Object','Subject + Verb + Time + Object','Time + Verb + Subject','Object + Subject + Verb'], ans:0, hint:'我(S)早饭(time)一般(freq adv)吃(V)面条(O) — time before verb' },
+    { type:'match', stem:'Match Chinese food to English', left:['汉堡包','披萨饼','沙拉','鸡蛋'], right:['hamburger','pizza','salad','egg'], pairs:[[0,0],[1,1],[2,2],[3,3]], hint:'Modern breakfast choices — both Western and Chinese options' },
+    { type:'mc', stem:'<span class="cn">比较</span> in 我比较喜欢吃包子 means:', choices:['relatively / quite (degree adverb)','to compare (verb)','more than','also'], ans:0, hint:'HSK3: 比较 as degree adverb = relatively/fairly: 比较+adj/verb = fairly/quite' },
+    { type:'fill', stem:'Ask "What do you usually eat for lunch?": <span class="cn">你午饭＿＿吃什么？</span>', ans:['一般'], hint:'一般 = usually/generally — placed before the verb' },
+    { type:'mc', stem:'Culture: Why do many Chinese people prefer hot food for breakfast?', choices:['Traditional Chinese medicine (中医) believes warm food protects the stomach','Western influence makes cold food popular','Convenience stores don\'t sell hot food','It is only a recent trend'], ans:0, hint:'中国的饮食文化受中医影响 — 热食护胃 (warm food protects the stomach)' },
+  ]},
+  { qs:[
+    { type:'mc', stem:'<span class="cn">我早饭一般吃面条。</span> — What is the grammatical role of 早饭 here?', choices:['时间状语 (time adverbial indicating when the eating happens)','主语 (subject)','宾语 (object)','谓语 (predicate)'], ans:0, hint:'早饭 = at breakfast time — it functions as a time adverbial (时间状语), not the object' },
+    { type:'mc', stem:'<span class="cn">一般</span> vs <span class="cn">总是</span> — the difference is:', choices:['一般 = usually/generally; 总是 = always (stronger frequency)','They mean the same','一般 means always; 总是 means sometimes','总是 is more polite'], ans:0, hint:'HSK3: 总是 = always (强调); 一般 = generally (more neutral)' },
+    { type:'fill', stem:'Complete: "I don\'t usually eat breakfast." <span class="cn">我一般不吃＿＿＿。</span>', ans:['早饭'], hint:'一般不 = usually don\'t; 早饭 = breakfast' },
+    { type:'mc', stem:'China\'s Eight Regional Cuisines (八大菜系) developed because:', choices:['Different climates and geography led to different ingredients and cooking styles','A government decree created 8 official styles','There are 8 provinces in China','All regions copied one original style'], ans:0, hint:'Geography (地理) and climate (气候) shape food culture — rice in south, wheat in north' },
+    { type:'mc', stem:'<span class="cn">比较</span> as a degree adverb modifies:', choices:['Adjectives and verbs to mean "relatively/fairly"','Only nouns','Only questions','Only the sentence subject'], ans:0, hint:'比较 + adj: 比较好 = fairly good; 比较喜欢 = quite like' },
+    // READING
+    { type:'reading',
+      passage:'我叫哈姆丹，我是阿联酋人。在阿联酋，我早饭一般吃面包、鸡蛋或者奶酪。有时候我也吃哈里斯粥。在中国，我的朋友小龙说，他早饭一般吃包子、粥或者面条。他说南方人喜欢喝粥，北方人喜欢吃包子和馒头。我觉得中国早饭很有意思，因为种类很多。我想试试中国的早饭！',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What does Hamdan usually eat for breakfast?',
+      choices:['Bread, eggs or cheese / 面包、鸡蛋或者奶酪','Noodles and steamed buns','Rice porridge','Dumplings'],
+      ans:0, hint:'我早饭一般吃面包、鸡蛋或者奶酪' },
+    { type:'reading',
+      passage:'我叫哈姆丹，我是阿联酋人。在阿联酋，我早饭一般吃面包、鸡蛋或者奶酪。有时候我也吃哈里斯粥。在中国，我的朋友小龙说，他早饭一般吃包子、粥或者面条。他说南方人喜欢喝粥，北方人喜欢吃包子和馒头。我觉得中国早饭很有意思，因为种类很多。我想试试中国的早饭！',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What do people in southern China prefer for breakfast?',
+      choices:['Congee / porridge (粥)','Steamed buns (包子)','Noodles (面条)','Fried rice (炒饭)'],
+      ans:0, hint:'南方人喜欢喝粥' },
+    { type:'reading',
+      passage:'我叫哈姆丹，我是阿联酋人。在阿联酋，我早饭一般吃面包、鸡蛋或者奶酪。有时候我也吃哈里斯粥。在中国，我的朋友小龙说，他早饭一般吃包子、粥或者面条。他说南方人喜欢喝粥，北方人喜欢吃包子和馒头。我觉得中国早饭很有意思，因为种类很多。我想试试中国的早饭！',
+      passageLabel:'Reading · 阅读理解',
+      stem:'Why does Hamdan find Chinese breakfast interesting?',
+      choices:['Because it has many varieties (种类很多)','Because it is cheaper','Because it is healthier','Because it is faster to prepare'],
+      ans:0, hint:'我觉得中国早饭很有意思，因为种类很多' },
+    { type:'reading',
+      passage:'我叫哈姆丹，我是阿联酋人。在阿联酋，我早饭一般吃面包、鸡蛋或者奶酪。有时候我也吃哈里斯粥。在中国，我的朋友小龙说，他早饭一般吃包子、粥或者面条。他说南方人喜欢喝粥，北方人喜欢吃包子和馒头。我觉得中国早饭很有意思，因为种类很多。我想试试中国的早饭！',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What does Hamdan want to do at the end?',
+      choices:['Try Chinese breakfast (想试试中国的早饭)','Cook Emirati food for Xiao Long','Go to a Chinese restaurant','Learn to make congee'],
+      ans:0, hint:'我想试试中国的早饭！' },
+    { type:'hots',
+      stem:'Breakfast habits differ greatly between China and the UAE. Chinese breakfast can include congee, steamed buns, or noodles; Emirati breakfast often features bread, eggs, and traditional dishes like harees. <span class="cn">早饭习惯反映了一个国家的饮食文化。</span> What do breakfast habits tell us about a culture? Do you think a "healthy" breakfast is the same in every culture? Use examples from both countries.',
+      prompts:[
+        'Think: why do Chinese eat hot food for breakfast while many UAE breakfasts include bread and cheese?',
+        'Is breakfast the most important meal? Does Chinese culture and Emirati culture agree on this?',
+        'Design your "ideal" breakfast combining the best of Chinese and Emirati food culture. What would you include and why?'
+      ],
+      hint:'Think about health, tradition, convenience, and cultural values in your answer.' },
+  ]},
+]},
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// LESSON 4 · 我现在在家上课。工作地点
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{ id:'2B-L4', num:'Lesson 4', title:'我现在在家上课。Work & Study Places', cn:'工作地点',
+  tiers:[
+  { qs:[
+    { type:'mc', stem:'<span class="cn">我现在在家上课。</span> means:', choices:['I am having class at home now.','I want to go to school now.','I work at home every day.','I am studying online.'], ans:0, hint:'现在 = now, 在家 = at home, 上课 = have class' },
+    { type:'mc', stem:'Which word means "company"?', choices:['公司','医院','学校','饭店'], ans:0, hint:'公司 gōngsī = company/firm' },
+    { type:'mc', stem:'<span class="cn">食堂</span> means:', choices:['canteen / cafeteria','restaurant','kitchen','supermarket'], ans:0, hint:'食堂 shítáng = school/work canteen — common in Chinese schools and workplaces' },
+    { type:'mc', stem:'<span class="cn">网课</span> means:', choices:['online class','math class','Chinese class','homework'], ans:0, hint:'网 = internet/network, 课 = class; 网课 = online class' },
+    { type:'mc', stem:'<span class="cn">教室</span> means:', choices:['classroom','office','hospital','library'], ans:0, hint:'教 = teach, 室 = room; 教室 = classroom' },
+    { type:'mc', stem:'<span class="cn">问</span> in 请问 means:', choices:['to ask','to answer','to think','to tell'], ans:0, hint:'请问 = excuse me / may I ask — polite formula for asking questions' },
+    { type:'fill', stem:'Complete: <span class="cn">她在＿＿＿工作。</span> (She works at a hospital.)', ans:['医院'], hint:'医院 yīyuàn = hospital' },
+    { type:'match', stem:'Match workplace to Chinese', left:['公司','医院','学校','食堂'], right:['company','hospital','school','canteen'], pairs:[[0,0],[1,1],[2,2],[3,3]], hint:'Common workplace and school locations' },
+    { type:'mc', stem:'Culture: After the pandemic, many people in China started 在家上班 (working from home). This is called:', choices:['远程工作 / 居家办公 (remote work)','上学 (going to school)','出差 (business trip)','加班 (overtime)'], ans:0, hint:'中国职业变化：居家办公已成为新趋势 — remote work is a growing trend' },
+    { type:'fill', stem:'Say "I have class now": <span class="cn">我现在＿＿课。</span>', ans:['上'], hint:'上课 = to have class/attend class' },
+  ]},
+  { qs:[
+    { type:'mc', stem:'<span class="cn">我现在在家上课。</span> — 正在 can replace 现在 to emphasise:', choices:['An action in progress (progressive aspect)','A completed action','A future plan','A habit'], ans:0, hint:'HSK1/2: 正在+verb = currently doing sth (进行态) — 我正在上课' },
+    { type:'mc', stem:'The sentence <span class="cn">我在家上课。</span> — 在家 functions as:', choices:['地点状语 (location adverbial = at home)','主语 (subject)','宾语 (object)','谓语 (predicate)'], ans:0, hint:'在家 = at home — a location phrase serving as adverbial (状语) before the verb' },
+    { type:'fill', stem:'Make it progressive: <span class="cn">他＿＿在公司开会。</span> (He is having a meeting at the company.)', ans:['正在'], hint:'正在 = currently doing (进行态) — 正在 + verb phrase' },
+    { type:'mc', stem:'<span class="cn">现在</span> vs <span class="cn">正在</span> — the key difference is:', choices:['现在 = now (time); 正在 = currently doing (aspect marker for ongoing action)','They are identical','正在 = now; 现在 = aspect marker','Both are time words only'], ans:0, hint:'现在 = time reference (now); 正在 = grammatical aspect (action in progress)' },
+    { type:'mc', stem:'Which question correctly asks where someone works?', choices:['你在哪里工作？','你工作哪里？','哪里你工作？','你工作在哪？'], ans:0, hint:'Subject + 在 + location verb or: 你在哪里工作？= Where do you work?' },
+    { type:'match', stem:'Match sentence to grammar feature', left:['我在家上课。','我正在上课。','我现在上课。','我在学校工作。'], right:['在家 as location adverbial','正在 progressive aspect','现在 as time word','在学校 as location adverbial'], pairs:[[0,0],[1,1],[2,2],[3,3]], hint:'Identify the key grammar feature in each sentence' },
+    { type:'mc', stem:'<span class="cn">上班</span> vs <span class="cn">上课</span> — the difference is:', choices:['上班 = go to work (for adults); 上课 = attend class (for students)','They are the same','上班 is for school; 上课 is for adults','Both mean "go to school"'], ans:0, hint:'班 = workplace/shift; 课 = class/lesson — different contexts for 上' },
+    { type:'fill', stem:'Say "She is currently working at the company": <span class="cn">她正在公司＿＿班。</span>', ans:['上'], hint:'上班 = to go to work/be at work' },
+    { type:'mc', stem:'The pattern <span class="cn">在 + Place + Verb</span> is used to:', choices:['Show where an action takes place','Ask where someone is from','Show possession','Express a completed action'], ans:0, hint:'在+place = location where the action happens: 在家上课, 在公司工作' },
+    { type:'mc', stem:'Culture: 中国的职业变化 — which major change happened to Chinese working culture?', choices:['Rise of online work, internet businesses, and 网课 (online classes)','Everyone works at home permanently','All schools moved to online permanently','Companies no longer exist'], ans:0, hint:'数字化转型 — digital transformation changed how Chinese work and study' },
+  ]},
+  { qs:[
+    { type:'mc', stem:'In <span class="cn">我现在在家上课</span>, the two 在 have different grammatical roles. Identify them:', choices:['现在 = time adverb; 在家 = 在 as preposition introducing location of action','Both 在 are the same','现在 = location; 在家 = time','There is only one 在'], ans:0, hint:'现在 is one word (time adv); 在家 = 在(prep)+家(noun) — location phrase' },
+    { type:'mc', stem:'<span class="cn">正在+V</span> vs <span class="cn">V+着</span> — both express ongoing actions but:', choices:['正在 emphasises action in progress; 着 emphasises a resulting state','They are identical','着 is used for completed actions','正在 is only for future'], ans:0, hint:'HSK2: 着 (动态助词) = state persisting; 正在 = action actively happening' },
+    { type:'fill', stem:'Complete: "Online classes have changed how students learn." <span class="cn">网课改变了学生学习的＿＿。</span>', ans:['方式','方法'], hint:'方式/方法 = way/method — 改变了…的方式 = changed the way of...' },
+    { type:'mc', stem:'Why does the lesson title use 在家 (at home) rather than 回家 (go home)?', choices:['在家 describes a location state (being at home); 回家 describes a movement (returning home)','They mean the same thing','在家 is wrong here','回家 would also be correct'], ans:0, hint:'在 = be located at (static); 回 = return to (movement) — completely different concepts' },
+    { type:'mc', stem:'The pandemic accelerated the trend of 在家上班 in China. This connects to which HSK 3 grammar concept?', choices:['连动句 (serial verb construction): 在家+上班 (be at home + work)','被动句 (passive sentence)','把字句 (disposal sentence)','存现句 (existential sentence)'], ans:0, hint:'在家上班 = 连动: be at home → and work — two verb phrases in sequence' },
+    // READING
+    { type:'reading',
+      passage:'我叫王老师，我在一所中学教中文。我每天早上八点到学校，在教室里上课。但是，去年因为疫情，我们不能去学校，只能在家上网课。我发现，上网课很方便，但是学生问问题没有在教室里方便。我的学生小赛义德说，他在家上课的时候，有时候会去食堂吃午饭，因为学校的食堂还开着。现在学校恢复正常了，我们又回到教室上课了，我觉得很高兴。',
+      passageLabel:'Reading · 阅读理解',
+      stem:'Where does Teacher Wang usually teach?',
+      choices:['In a classroom at a middle school / 教室','At home online','At a company','In a canteen'],
+      ans:0, hint:'我每天早上八点到学校，在教室里上课' },
+    { type:'reading',
+      passage:'我叫王老师，我在一所中学教中文。我每天早上八点到学校，在教室里上课。但是，去年因为疫情，我们不能去学校，只能在家上网课。我发现，上网课很方便，但是学生问问题没有在教室里方便。我的学生小赛义德说，他在家上课的时候，有时候会去食堂吃午饭，因为学校的食堂还开着。现在学校恢复正常了，我们又回到教室上课了，我觉得很高兴。',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What does Teacher Wang find less convenient about online classes?',
+      choices:['Students asking questions is less convenient than in class','Logging in is difficult','The internet is slow','Students are not at home'],
+      ans:0, hint:'学生问问题没有在教室里方便' },
+    { type:'reading',
+      passage:'我叫王老师，我在一所中学教中文。我每天早上八点到学校，在教室里上课。但是，去年因为疫情，我们不能去学校，只能在家上网课。我发现，上网课很方便，但是学生问问题没有在教室里方便。我的学生小赛义德说，他在家上课的时候，有时候会去食堂吃午饭，因为学校的食堂还开着。现在学校恢复正常了，我们又回到教室上课了，我觉得很高兴。',
+      passageLabel:'Reading · 阅读理解',
+      stem:'Where does Saeed sometimes eat lunch when studying from home?',
+      choices:['The school canteen (食堂)','At home','A restaurant nearby','A fast food place'],
+      ans:0, hint:'有时候会去食堂吃午饭，因为学校的食堂还开着' },
+    { type:'reading',
+      passage:'我叫王老师，我在一所中学教中文。我每天早上八点到学校，在教室里上课。但是，去年因为疫情，我们不能去学校，只能在家上网课。我发现，上网课很方便，但是学生问问题没有在教室里方便。我的学生小赛义德说，他在家上课的时候，有时候会去食堂吃午饭，因为学校的食堂还开着。现在学校恢复正常了，我们又回到教室上课了，我觉得很高兴。',
+      passageLabel:'Reading · 阅读理解',
+      stem:'How does Teacher Wang feel now that school is back to normal?',
+      choices:['Very happy (很高兴)','Worried','Tired','Disappointed'],
+      ans:0, hint:'我觉得很高兴 — 高兴 = happy' },
+    { type:'hots',
+      stem:'During the pandemic, both Chinese students and UAE students experienced 网课 (online learning). Now that schools are back, many students still prefer some aspects of online learning. <span class="cn">网课改变了我们学习的方式。</span> What are the advantages and disadvantages of online learning compared to classroom learning? Which do YOU prefer, and why? Think about both the Chinese and UAE experience.',
+      prompts:[
+        'Think: what can a teacher do in a classroom that cannot be done online? What can online classes offer that classrooms cannot?',
+        'In China, 网课 became very advanced with apps like DingTalk (钉钉). How did technology change education?',
+        'If you had to design the "perfect" school of the future — partly online and partly in-person — what would it look like?'
+      ],
+      hint:'Use specific examples from your own experience as a student.' },
+  ]},
+]},
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// LESSON 5 · 请问你们要什么？在饭店点餐
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{ id:'2B-L5', num:'Lesson 5', title:'请问你们要什么？Ordering Food', cn:'在饭店点餐',
+  tiers:[
+  { qs:[
+    { type:'mc', stem:'<span class="cn">请问你们要什么？</span> means:', choices:['Excuse me, what would you like to order?','What do you want to drink?','Where is the menu?','Can I help you?'], ans:0, hint:'请问 = excuse me/may I ask; 要 = want/would like; 什么 = what' },
+    { type:'mc', stem:'<span class="cn">请</span> in 请坐 means:', choices:['please (polite invitation)','invite to a meal','ask a question','a surname'], ans:0, hint:'请 + verb = please do sth — polite invitation; 请坐 = please sit down' },
+    { type:'mc', stem:'<span class="cn">饺子</span> are:', choices:['dumplings','noodles','steamed buns','spring rolls'], ans:0, hint:'饺子 jiǎozi = dumplings — one of China\'s most beloved traditional foods' },
+    { type:'mc', stem:'<span class="cn">服务员</span> means:', choices:['waiter / service staff','customer','chef','manager'], ans:0, hint:'服务 = service, 员 = staff/person; 服务员 = service staff/waiter' },
+    { type:'mc', stem:'<span class="cn">汤</span> means:', choices:['soup','rice','water','sauce'], ans:0, hint:'汤 tāng = soup — a staple at Chinese meals' },
+    { type:'mc', stem:'<span class="cn">菜单</span> means:', choices:['menu','dish name','recipe','order form'], ans:0, hint:'菜 = food/dish, 单 = list/document; 菜单 = menu' },
+    { type:'fill', stem:'Complete: <span class="cn">请问，你们要几＿＿汤？</span>', ans:['碗'], hint:'碗 wǎn = bowl — measure word for soup, rice, noodles' },
+    { type:'match', stem:'Match ordering vocabulary', left:['请问','服务员','菜单','买单'], right:['excuse me','waiter','menu','bill please / pay the check'], pairs:[[0,0],[1,1],[2,2],[3,3]], hint:'Restaurant vocabulary from Lesson 5' },
+    { type:'mc', stem:'Culture: 中国的筷子文化 — what are chopsticks called in Chinese?', choices:['筷子','碗','盘','杯'], ans:0, hint:'筷子 kuàizi = chopsticks — one of China\'s most iconic cultural symbols' },
+    { type:'fill', stem:'Order two bowls of soup: <span class="cn">我们要两＿＿汤。</span>', ans:['碗'], hint:'碗 = bowl — measure word; 两碗 = two bowls' },
+  ]},
+  { qs:[
+    { type:'mc', stem:'<span class="cn">请问你们要什么？</span> — 请问 is a:', choices:['礼貌表达 (polite formula) functioning as a discourse marker','动词谓语 (main verb predicate)','疑问副词 (interrogative adverb)','连词 (conjunction)'], ans:0, hint:'请问 = please may I ask — a fixed polite expression used to preface questions' },
+    { type:'mc', stem:'In restaurant ordering, <span class="cn">要</span> vs <span class="cn">想</span> — which is more direct?', choices:['要 is more direct (I\'ll have/I want); 想 is softer (I\'d like)','They are the same','想 is more direct','要 is impolite'], ans:0, hint:'要: direct order; 想: softer wish — waiters often use 要: 你们要什么？' },
+    { type:'fill', stem:'Complete the waiter\'s question: <span class="cn">请问你们要几位＿＿＿？</span> (How many are in your party?)', ans:['客人','人'], hint:'几位客人/人 = how many guests — 位 is a polite measure word for people' },
+    { type:'mc', stem:'<span class="cn">碗</span> is used as a measure word for:', choices:['bowls of soup, noodles, rice','cups of tea','bottles of water','plates of food'], ans:0, hint:'一碗汤 = a bowl of soup; 一碗面条 = a bowl of noodles; 碗 = bowl' },
+    { type:'mc', stem:'<span class="cn">盘</span> is used as a measure word for:', choices:['plates of food / dishes','bowls','cups','bottles'], ans:0, hint:'一盘饺子 = a plate of dumplings; 盘 = plate/dish (larger serving plate)' },
+    { type:'mc', stem:'Which sentence is a correct order at a restaurant?', choices:['我要一碗汤和一盘饺子。','一碗汤要我和一盘饺子。','汤和饺子我一碗一盘要。','我要汤一碗和饺子一盘。'], ans:0, hint:'我(S)要(V)一碗汤(O1)和一盘饺子(O2) — SVO order' },
+    { type:'match', stem:'Match measure word to food', left:['碗','盘','杯','瓶'], right:['soup/noodles (bowl)','dumplings (plate)','tea (cup)','water (bottle)'], pairs:[[0,0],[1,1],[2,2],[3,3]], hint:'量词 for common restaurant items' },
+    { type:'mc', stem:'<span class="cn">这儿</span> in 坐这儿 means:', choices:['here (near speaker)','there (far from speaker)','where (question)','everywhere'], ans:0, hint:'这儿 = here (close to speaker); 那儿 = there (farther away)' },
+    { type:'fill', stem:'Ask for the bill: <span class="cn">服务员，请＿＿单！</span>', ans:['买'], hint:'买单 = pay the bill — a common expression in Chinese restaurants' },
+    { type:'mc', stem:'Culture: Chinese chopstick etiquette (筷子文化) — which is CORRECT behaviour?', choices:['Place chopsticks horizontally on the bowl or on a chopstick rest when not eating','Stick chopsticks upright in rice','Point at people with chopsticks','Pass food by spearing it with chopsticks'], ans:0, hint:'中国筷子礼仪：不能竖插碗中(looks like incense for the dead)，不能指人' },
+  ]},
+  { qs:[
+    { type:'mc', stem:'In Chinese restaurant discourse, 请问 functions as:', choices:['A politeness marker that softens the question — it does not change the grammatical structure','The main verb of the sentence','A question particle like 吗','A time adverbial'], ans:0, hint:'请问 = "May I ask?" — a formulaic politeness opener; the actual question follows' },
+    { type:'mc', stem:'The construction <span class="cn">给我 + noun</span> in restaurant ordering means:', choices:['Give/bring me + [item] — a direct but polite order','I want to give','We have','Please have some'], ans:0, hint:'给我一杯茶 = Bring me a cup of tea; 给 = to give/for — introduced by 给 as verb' },
+    { type:'fill', stem:'Order politely: "May I have two plates of dumplings?" <span class="cn">请问，可以给我们两＿＿饺子吗？</span>', ans:['盘'], hint:'盘 = plate — measure word for serving dishes like 饺子' },
+    { type:'mc', stem:'Chinese restaurants often serve dishes to share (共享). This reflects the cultural value of:', choices:['集体主义 (collectivism) — eating together from shared dishes','Individualism — everyone orders separately','Western table manners','Avoiding conversation at dinner'], ans:0, hint:'共享文化 — sharing dishes reflects Chinese communal values (集体主义)' },
+    { type:'mc', stem:'The Chinese tradition of the host paying for the whole table (请客) reflects:', choices:['Face (面子) and hospitality — the host demonstrates generosity','Only older people pay','It is a legal requirement','Everyone pays their own share always'], ans:0, hint:'请客文化 — 面子 and 关系 (relationships) are central: paying for others shows respect and care' },
+    // READING
+    { type:'reading',
+      passage:'小明和他的朋友们在一家中餐馆吃饭。服务员走过来说："请问你们几位？"小明说："我们四位。"服务员带他们到桌子旁边说："请坐，这是菜单。"小明看了菜单，说："请问，这里有饺子吗？"服务员说："有的，还有汤和炒菜。"小明说："好，我们要两盘饺子、一碗汤、一盘炒饭。"吃完了，小明说："服务员，买单！"服务员说："好的，一共八十块。"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'How many people are in Xiao Ming\'s group?',
+      choices:['Four people / 四位','Two people / 两位','Three people / 三位','Five people / 五位'],
+      ans:0, hint:'我们四位 — 位 is a polite measure word for people' },
+    { type:'reading',
+      passage:'小明和他的朋友们在一家中餐馆吃饭。服务员走过来说："请问你们几位？"小明说："我们四位。"服务员带他们到桌子旁边说："请坐，这是菜单。"小明看了菜单，说："请问，这里有饺子吗？"服务员说："有的，还有汤和炒菜。"小明说："好，我们要两盘饺子、一碗汤、一盘炒饭。"吃完了，小明说："服务员，买单！"服务员说："好的，一共八十块。"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What does Xiao Ming order?',
+      choices:['Two plates of dumplings, one bowl of soup, one plate of fried rice','Noodles, tea, and dumplings','One plate of dumplings and two bowls of soup','Only fried rice and soup'],
+      ans:0, hint:'两盘饺子、一碗汤、一盘炒饭' },
+    { type:'reading',
+      passage:'小明和他的朋友们在一家中餐馆吃饭。服务员走过来说："请问你们几位？"小明说："我们四位。"服务员带他们到桌子旁边说："请坐，这是菜单。"小明看了菜单，说："请问，这里有饺子吗？"服务员说："有的，还有汤和炒菜。"小明说："好，我们要两盘饺子、一碗汤、一盘炒饭。"吃完了，小明说："服务员，买单！"服务员说："好的，一共八十块。"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'How much is the bill?',
+      choices:['80 yuan / 八十块','40 yuan / 四十块','100 yuan / 一百块','60 yuan / 六十块'],
+      ans:0, hint:'一共八十块 — 一共 = in total' },
+    { type:'reading',
+      passage:'小明和他的朋友们在一家中餐馆吃饭。服务员走过来说："请问你们几位？"小明说："我们四位。"服务员带他们到桌子旁边说："请坐，这是菜单。"小明看了菜单，说："请问，这里有饺子吗？"服务员说："有的，还有汤和炒菜。"小明说："好，我们要两盘饺子、一碗汤、一盘炒饭。"吃完了，小明说："服务员，买单！"服务员说："好的，一共八十块。"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What expression does Xiao Ming use to ask for the bill?',
+      choices:['买单！','谢谢！','再见！','对不起！'],
+      ans:0, hint:'买单 = pay the bill — a common restaurant expression in Chinese' },
+    { type:'hots',
+      stem:'In China, going out for a meal is a social event — the host usually pays for everyone, dishes are shared, and meals can last a long time. In the UAE, dining out is also important and often involves large family gatherings. <span class="cn">在中国，请客吃饭是一种重要的社交礼仪。</span> Compare the dining culture of China and the UAE. What are the similarities? What are the differences? If you were hosting a Chinese friend for dinner in the UAE, what would you consider to make them feel welcome?',
+      prompts:[
+        'Think: who pays in a Chinese restaurant? Who pays in an Emirati family gathering? Why?',
+        'How does sharing food from common dishes differ from ordering individual meals? What does this say about cultural values?',
+        'What Emirati food customs might surprise a Chinese guest (or vice versa)?'
+      ],
+      hint:'Think about hospitality (好客), family values, and the social role of food in both cultures.' },
+  ]},
+]},
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// LESSON 6 · 我买了一部手机。购物1
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{ id:'2B-L6', num:'Lesson 6', title:'我买了一部手机。Shopping', cn:'购物1',
+  tiers:[
+  { qs:[
+    { type:'mc', stem:'<span class="cn">我买了一部手机。</span> means:', choices:['I bought a mobile phone.','I want to buy a phone.','I have a phone.','I am buying a phone.'], ans:0, hint:'买了 = bought (completed action, 了 marks completion); 手机 = mobile phone' },
+    { type:'mc', stem:'<span class="cn">手机</span> means:', choices:['mobile phone','computer','tablet','camera'], ans:0, hint:'手 = hand, 机 = machine/device; 手机 = handheld device = mobile phone' },
+    { type:'mc', stem:'<span class="cn">书包</span> means:', choices:['schoolbag / backpack','shopping bag','suitcase','handbag'], ans:0, hint:'书 = book, 包 = bag; 书包 = book bag = schoolbag' },
+    { type:'mc', stem:'<span class="cn">了</span> after a verb in <span class="cn">买了</span> indicates:', choices:['Completed action (past/perfective aspect)','Future intention','Ongoing action','Negation'], ans:0, hint:'动态助词 了¹ — placed after a verb to show the action is completed' },
+    { type:'mc', stem:'<span class="cn">支</span> is a measure word for:', choices:['pens, pencils (long thin objects)','books','phones','bags'], ans:0, hint:'一支笔 = one pen; 支 is used for long thin objects like pens' },
+    { type:'mc', stem:'<span class="cn">部</span> is a measure word for:', choices:['phones, movies, machines','books','cups','clothes'], ans:0, hint:'一部手机 = one mobile phone; 一部电影 = one movie; 部 for devices/movies' },
+    { type:'fill', stem:'Say "I bought a pen": <span class="cn">我买了一＿＿笔。</span>', ans:['支'], hint:'支 = measure word for pen-like objects' },
+    { type:'match', stem:'Match measure word to item', left:['支','本','部','还'], right:['pen (支笔)','notebook (本子)','phone (部手机)','also/still (还)'], pairs:[[0,0],[1,1],[2,2],[3,3]], hint:'量词 for shopping items + 还 as adverb' },
+    { type:'mc', stem:'Culture: 移动支付与数字人民币 — China leads the world in:', choices:['Mobile payment technology (WeChat Pay, Alipay, Digital Yuan)','Cash transactions only','Credit card use','Barter trading'], ans:0, hint:'中国是全球移动支付最发达的国家 — most transactions are cashless' },
+    { type:'fill', stem:'Complete: <span class="cn">我买了一＿＿手机。</span>', ans:['部'], hint:'部 is the correct measure word for phones and electronic devices' },
+  ]},
+  { qs:[
+    { type:'mc', stem:'<span class="cn">买了</span> uses 动态助词 了¹. What does it express?', choices:['Completion of the action (perfective aspect)','An ongoing action','A future plan','An ability'], ans:0, hint:'HSK1: 了¹ = 动态助词 for completed actions: V+了 = did/have done sth' },
+    { type:'mc', stem:'The negative of <span class="cn">我买了一部手机</span> is:', choices:['我没买手机 (use 没 to negate completed action)','我不买了手机','我不买手机了','我买不了手机'], ans:0, hint:'HSK1: completed actions negate with 没(有) + V — NOT 不+V+了' },
+    { type:'fill', stem:'Negate: <span class="cn">我买了书包。→ 我＿＿买书包。</span>', ans:['没'], hint:'没 negates completed actions: 没买 = did not buy' },
+    { type:'mc', stem:'<span class="cn">还</span> in 我还买了一本书 means:', choices:['also / in addition (关联副词)','still','then','or'], ans:0, hint:'HSK1: 还¹ as 关联副词 = also/in addition — 我买了手机，还买了书包' },
+    { type:'mc', stem:'Which sentence correctly uses 了 for a completed purchase?', choices:['我买了三支笔。','我买三了支笔。','我了买三支笔。','我买三支笔了。'], ans:0, hint:'V+了+quantity+measure word+noun: 买了(V+了) + 三支笔(Num+MW+N)' },
+    { type:'mc', stem:'<span class="cn">本</span> is a measure word for:', choices:['books, notebooks','pens','phones','bags'], ans:0, hint:'一本书 = one book; 一本子 = one notebook; 本 for book-like objects' },
+    { type:'match', stem:'Match HSK grammar term to example', left:['动态助词了¹','量词','否定副词没','关联副词还'], right:['买了 (completed)','一部手机','没买','还买了'], pairs:[[0,0],[1,1],[2,2],[3,3]], hint:'Identify grammar features in the lesson\'s key sentences' },
+    { type:'mc', stem:'In Chinese, why do you say 一部手机 instead of 一手机?', choices:['Chinese requires a measure word (量词) between a number and a noun','部 is optional','手机 is uncountable','一 can directly precede nouns for phones'], ans:0, hint:'HSK1/2: Number + 量词 + Noun is mandatory in Chinese — you cannot say 一手机' },
+    { type:'fill', stem:'Say "She also bought two books": <span class="cn">她＿＿买了两本书。</span>', ans:['还'], hint:'还 = also/in addition — 还 + V = also do sth' },
+    { type:'mc', stem:'Culture: Why has China\'s mobile payment system become so advanced?', choices:['High smartphone penetration + government support for Digital Yuan + WeChat/Alipay ecosystem','Because paper money was banned','Because banks don\'t exist in China','Because China doesn\'t use cash at all'], ans:0, hint:'数字化经济: 微信支付+支付宝+数字人民币 — China leapfrogged credit cards to mobile payment' },
+  ]},
+  { qs:[
+    { type:'mc', stem:'<span class="cn">V+了</span> vs <span class="cn">V+过</span> — both relate to past events but:', choices:['了¹ = completed action; 过 = experienced/ever done (experiential aspect)','They are identical','过 = completed; 了 = experienced','Both mark future plans'], ans:0, hint:'HSK2: 买了 = I bought (completed); 买过 = I have bought/tried (experience)' },
+    { type:'mc', stem:'The sentence <span class="cn">我买了一部手机，还买了一本书。</span> uses 还 to show:', choices:['An additional action beyond what was already mentioned','A contrast','A question','A condition'], ans:0, hint:'还 = also/additionally — links two completed actions: bought X, and also bought Y' },
+    { type:'fill', stem:'Complete: "Did you buy a phone?" <span class="cn">你买＿＿手机吗？</span>', ans:['了'], hint:'买了…吗 = Did you buy...? — 了 in yes/no question about completion' },
+    { type:'mc', stem:'China\'s 数字人民币 (Digital Yuan / e-CNY) is significant because:', choices:['It is China\'s central bank digital currency — a government-backed digital payment system that could reshape global finance','It is the same as Bitcoin','It is only used in Shanghai','It replaced all cash in 2020'], ans:0, hint:'数字人民币 = e-CNY — issued by People\'s Bank of China; part of China\'s broader digital economy strategy' },
+    { type:'mc', stem:'The concept of 网购 (online shopping) in China — which platforms are most dominant?', choices:['Taobao, JD.com, Pinduoduo — collectively larger than Amazon','Only WeChat Pay','Only Alibaba','Foreign platforms like Amazon dominate'], ans:0, hint:'中国网购平台：淘宝、京东、拼多多 — China has the world\'s largest e-commerce market' },
+    // READING
+    { type:'reading',
+      passage:'我叫小刚，我喜欢购物。上个周末，我去了一个商场。我买了一部新手机，花了两千块钱。我还买了一本书和两支笔，花了三十块。我的朋友小美说，在中国，很多人用手机支付，不用现金。我觉得这很方便。她还说，现在有数字人民币，可以用手机付钱。回家以后，我发现，我还可以在网上买东西，叫外卖，不用出门！',
+      passageLabel:'Reading · 阅读理解',
+      stem:'How much did Xiao Gang\'s new phone cost?',
+      choices:['2000 yuan / 两千块','3000 yuan / 三千块','1000 yuan / 一千块','500 yuan / 五百块'],
+      ans:0, hint:'我买了一部新手机，花了两千块钱' },
+    { type:'reading',
+      passage:'我叫小刚，我喜欢购物。上个周末，我去了一个商场。我买了一部新手机，花了两千块钱。我还买了一本书和两支笔，花了三十块。我的朋友小美说，在中国，很多人用手机支付，不用现金。我觉得这很方便。她还说，现在有数字人民币，可以用手机付钱。回家以后，我发现，我还可以在网上买东西，叫外卖，不用出门！',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What does Xiao Mei tell Xiao Gang about payment in China?',
+      choices:['Many people use mobile payment, not cash','Everyone uses credit cards','China has banned cash','Mobile payment is difficult'],
+      ans:0, hint:'在中国，很多人用手机支付，不用现金' },
+    { type:'reading',
+      passage:'我叫小刚，我喜欢购物。上个周末，我去了一个商场。我买了一部新手机，花了两千块钱。我还买了一本书和两支笔，花了三十块。我的朋友小美说，在中国，很多人用手机支付，不用现金。我觉得这很方便。她还说，现在有数字人民币，可以用手机付钱。回家以后，我发现，我还可以在网上买东西，叫外卖，不用出门！',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What does Xiao Gang discover when he gets home?',
+      choices:['He can also shop online and order food delivery without going out','He forgot his phone at the mall','He needs to go back to buy more things','The mall closed'],
+      ans:0, hint:'在网上买东西，叫外卖，不用出门！' },
+    { type:'reading',
+      passage:'我叫小刚，我喜欢购物。上个周末，我去了一个商场。我买了一部新手机，花了两千块钱。我还买了一本书和两支笔，花了三十块。我的朋友小美说，在中国，很多人用手机支付，不用现金。我觉得这很方便。她还说，现在有数字人民币，可以用手机付钱。回家以后，我发现，我还可以在网上买东西，叫外卖，不用出门！',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What is the total cost of the book and pens?',
+      choices:['30 yuan / 三十块','20 yuan / 二十块','50 yuan / 五十块','15 yuan / 十五块'],
+      ans:0, hint:'买了一本书和两支笔，花了三十块' },
+    { type:'hots',
+      stem:'China leads the world in mobile payments and e-commerce. Platforms like Taobao and WeChat Pay have changed how people shop, eat, and live. <span class="cn">数字经济改变了中国人的生活方式。</span> In the UAE, digital payments and online shopping are also growing rapidly. Do you think digital payment is always an improvement? What might be the advantages AND risks of a cashless society? Would you want to live in a completely cashless world?',
+      prompts:[
+        'Think: what happens to elderly people or people without smartphones in a cashless society?',
+        'China\'s digital Yuan (数字人民币) is government-controlled. Is this different from private apps like WeChat Pay? What are the implications?',
+        'In the UAE, do you use apps like Apple Pay or online delivery? How has this changed your life compared to your parents\' generation?'
+      ],
+      hint:'Think about convenience, privacy, inclusion, and the future of money.' },
+  ]},
+]},
+
+]; // END LESSONS
+
+// ── State ──
+let selectedLesson = 0, selectedTier = 0;
+let currentQs = [], qIndex = 0, score = 0;
+let timerInterval = null, secondsLeft = 900;
+let responses = []; // stores {userIdx/userText/correct/...} per question
+
+// ── Build Setup UI ──
+function buildSetup() {
+  const grid = document.getElementById('lessonGrid');
+  grid.innerHTML = LESSONS.map((l, i) =>
+    `<div class="lesson-card ${i===0?'active':''}" id="lc${i}" onclick="selectLesson(${i})">
+      <div class="lc-num">${l.num}</div>
+      <div class="lc-title">${l.title}</div>
+      <div class="lc-cn">${l.cn}</div>
+    </div>`
+  ).join('');
+  // Populate mobile lesson dropdown
+  const sel = document.getElementById('lessonSelect');
+  if (sel) {
+    sel.innerHTML = LESSONS.map((l, i) =>
+      `<option value="${i}">${l.num} · ${l.cn} (${l.title})</option>`
+    ).join('');
+    sel.value = '0';
+  }
+}
+
+function selectLesson(i) {
+  selectedLesson = i;
+  document.querySelectorAll('.lesson-card').forEach((el,j) => el.classList.toggle('active', j===i));
+}
+
+function setTier(i) {
+  selectedTier = i;
+  [0,1,2].forEach(j => {
+    const el = document.getElementById(`tc${j}`);
+    el.className = `tier-card ${'t1 t2 t3'.split(' ')[j]}${j===i?' active':''}`;
+  });
+}
+
+// ── Quiz Logic ──
+function startQuiz() {
+  const lesson = LESSONS[selectedLesson];
+  // Deep-clone questions so _rot / _choices don't persist across retries
+  currentQs = lesson.tiers[selectedTier].qs.map(q => Object.assign({}, q));
+  qIndex = 0; score = 0;
+  responses = new Array(currentQs.length).fill(null);
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('studentInfoScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'block';
+  const tierColors = ['tb-t1','tb-t2','tb-t3'];
+  const tierNames = ['Tier 1 · 迈向掌握','Tier 2 · 达到掌握','Tier 3 · 深度掌握'];
+  document.getElementById('qBadge').className = 'tier-badge ' + tierColors[selectedTier];
+  document.getElementById('qBadge').textContent = tierNames[selectedTier];
+  document.getElementById('progressFill').className = 'progress-fill ' + ['pf-t1','pf-t2','pf-t3'][selectedTier];
+  secondsLeft = 900;
+  startTimer();
+  renderQuestion();
+}
+
+function startTimer() {
+  clearInterval(timerInterval);
+  updateTimer();
+  timerInterval = setInterval(() => {
+    secondsLeft--;
+    updateTimer();
+    if (secondsLeft <= 0) { clearInterval(timerInterval); showResult(); }
+  }, 1000);
+}
+
+function updateTimer() {
+  const m = Math.floor(secondsLeft/60), s = secondsLeft%60;
+  const el = document.getElementById('timerDisplay');
+  el.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+  const w = document.getElementById('timerWrap');
+  w.className = 'timer-wrap' + (secondsLeft<=120?' timer-urgent':secondsLeft<=240?' timer-warn':'');
+}
+
+function renderQuestion() {
+  const q = currentQs[qIndex];
+  document.getElementById('qCounter').textContent = `${qIndex+1} / ${currentQs.length}`;
+  const pct = (qIndex / currentQs.length) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  const mount = document.getElementById('qMount');
+
+  // For each mc/reading question, rotate choices so correct answer isn't always A
+  // We use a per-question rotation stored in q._rot (set once, stable per session)
+  if ((q.type === 'mc' || q.type === 'reading') && q._rot === undefined) {
+    // Assign rotation based on question index to spread answers evenly
+    q._rot = qIndex % 4;
+    const rot = q._rot;
+    // Rotate choices array so correct answer lands at position rot
+    const origAns = q.ans; // 0 = originally first choice is correct
+    // Build new order: put correct at position rot, others fill remaining slots
+    const newChoices = [];
+    const others = q.choices.filter((_, i) => i !== origAns);
+    for (let i = 0; i < 4; i++) {
+      if (i === rot) newChoices.push(q.choices[origAns]);
+      else newChoices.push(others.shift());
+    }
+    q._choices = newChoices;
+    q._ans = rot;
+  }
+
+  const typeLabels = {
+    mc: 'Multiple choice · 选择题',
+    fill: 'Fill in · 填空题',
+    match: 'Match · 连线题',
+    reading: 'Reading comprehension · 阅读理解',
+    hots: 'Critical thinking · 批判性思维'
+  };
+
+  let html = `<div class="q-card">
+    <div class="q-type-tag">${typeLabels[q.type] || q.type}</div>`;
+
+  // Reading passage with pinyin toggle
+  if (q.type === 'reading') {
+    const pid = `pinyin_${qIndex}`;
+    // Build passage with ruby markup for pinyin version
+    const passageWithPinyin = buildPassageWithPinyin(q.passage);
+    html += `<div class="pinyin-toggle-row">
+      <span class="reading-label" style="margin:0;">${q.passageLabel || 'Reading · 阅读理解'}</span>
+      <span style="flex:1"></span>
+      <span class="pinyin-toggle-label">拼音</span>
+      <label class="pinyin-switch">
+        <input type="checkbox" id="${pid}" onchange="togglePassagePinyin(this,'passage_${qIndex}')">
+        <span class="pinyin-slider"></span>
+      </label>
+    </div>
+    <div class="reading-passage passage-nopinyin" id="passage_${qIndex}">${passageWithPinyin}</div>${buildVocabGloss(q.passage)}`;
+  }
+
+  // HOTS box
+  if (q.type === 'hots') {
+    html += `<div class="hots-box">
+      <div class="hots-label">Critical / Creative Thinking · 批判性思维</div>
+      <div class="q-stem">${q.stem}</div>
+      <div class="hots-prompts">
+        ${q.prompts.map(p => `<div class="hots-prompt">💡 ${p}</div>`).join('')}
+      </div>
+    </div>
+    <div class="hint-toggle" onclick="toggleHint(this,'hint_${qIndex}')">
+      <span>💡 Show hint · 查看提示</span><span class="ht-arrow">▼</span>
+    </div>
+    <div class="hint-body" id="hint_${qIndex}">${q.hint}</div>
+    <textarea class="hots-open-input" id="hotsInput" placeholder="Write your thoughts here (minimum 30 characters) · 在这里写下你的想法（至少30个字符）…"></textarea>
+    <button class="hots-submit-btn" onclick="submitHOTS()">Submit · 提交</button>
+    <div class="hots-submitted" id="hotsSubmitted">✓ Response recorded · 已记录</div>`;
+  } else {
+    html += `<div class="q-stem">${q.stem}</div>`;
+    html += `<div class="hint-toggle" onclick="toggleHint(this,'hint_${qIndex}')">
+      <span>💡 Show hint · 查看提示</span><span class="ht-arrow">▼</span>
+    </div>
+    <div class="hint-body" id="hint_${qIndex}">${q.hint}</div>`;
+  }
+
+  if (q.type === 'mc' || q.type === 'reading') {
+    const keys = ['A','B','C','D'];
+    const displayChoices = q._choices || q.choices;
+    const displayAns = (q._ans !== undefined) ? q._ans : q.ans;
+    html += `<div class="options-grid">` + displayChoices.map((c,i) =>
+      `<button class="opt-btn" id="opt${i}" onclick="answerMC(${i},${displayAns})">
+        <span class="opt-key">${keys[i]}</span><span class="opt-text">${c}</span>
+      </button>`).join('') + `</div>`;
+  } else if (q.type === 'fill') {
+    html += `<div class="fill-wrap">
+      <input class="fill-input" id="fillIn" placeholder="Type your answer here · 在此输入答案" onkeydown="if(event.key==='Enter')checkFill()">
+      <button class="submit-btn" onclick="checkFill()">提交 Submit</button>
+    </div>`;
+  } else if (q.type === 'match') {
+    const shuffled = [...q.right].sort(() => Math.random() - .5);
+    html += `<div class="match-wrap">
+      <div><div class="match-col-label">Chinese 中文</div><div class="match-col">` +
+      q.left.map((l,i) => `<div class="match-item" id="ml${i}" onclick="selectMatchLeft(${i})">${l}</div>`).join('') +
+      `</div></div><div><div class="match-col-label">English 英文</div><div class="match-col">` +
+      shuffled.map((r,i) => `<div class="match-item" id="mr${i}" onclick="selectMatchRight(${i},'${r.replace(/'/g,"\\'")}')\" data-val="${r.replace(/"/g,'&quot;')}">${r}</div>`).join('') +
+      `</div></div></div><button class="match-check-btn" onclick="checkMatch()">Check 检查</button>`;
+    window._shuffled = shuffled; window._matchCorrect = {}; window._matchPairs = {}; window._matchSelected = { l:null, r:null };
+  }
+
+  if (q.type !== 'hots') {
+    html += `<div class="feedback" id="fb"></div>`;
+  }
+
+  html += `</div>
+  <button class="next-btn" id="nextBtn" onclick="nextQ()">${qIndex < currentQs.length-1 ? '下一题 Next →' : '查看成绩 See results →'}</button>`;
+  mount.innerHTML = html;
+}
+
+// ── PINYIN DICTIONARY — word-level, for 2B reading passages ──────
+const PINYIN_DICT = {
+
+  // ── 2B VOCAB — Drinks, Food, Places, Shopping ─────────────────────
+  // Multi-char words (greedy match first)
+  '服务员':'fúwùyuán','绿茶':'lǜchá','可乐':'kělè','牛奶':'niúnǎi',
+  '果汁':'guǒzhī','饮料':'yǐnliào','小卖部':'xiǎomàibù','身体':'shēntǐ',
+  '炒饭':'chǎofàn','炒菜':'chǎocài','面条':'miàntiáo','包子':'bāozi',
+  '米饭':'mǐfàn','面包':'miànbāo','鸡蛋':'jīdàn','奶酪':'nǎilào',
+  '馒头':'mántou','粤菜':'yuècài','香料':'xiāngliào','早饭':'zǎofàn',
+  '午饭':'wǔfàn','晚饭':'wǎnfàn','中餐馆':'Zhōngcānguǎn','菜单':'càidān',
+  '饺子':'jiǎozi','食堂':'shítáng','服务':'fúwù','网课':'wǎngkè',
+  '教室':'jiàoshì','疫情':'yìqíng','方便':'fāngbiàn','一般':'yìbān',
+  '或者':'huòzhě','一共':'yígòng','买单':'mǎidān','旁边':'pángbiān',
+  '数字人民币':'shùzì rénmínbì','手机支付':'shǒujī zhīfù','现金':'xiànjīn',
+  '付钱':'fù qián','购物':'gòuwù','商场':'shāngchǎng','周末':'zhōumò',
+  '种类':'zhǒnglèi','发现':'fāxiàn','恢复':'huīfù','正常':'zhèngcháng',
+  '出门':'chūmén','外卖':'wàimài','网上':'wǎngshàng',
+  '哈里斯':'Hālǐsī','哈姆丹':'Hāmǔdān','小龙':'Xiǎolóng',
+  '小刚':'Xiǎogāng','王老师':'Wáng lǎoshī','小赛义德':'Xiǎo Sàiyìdé',
+  '广东':'Guǎngdōng','中餐':'zhōngcān','餐馆':'cānguǎn',
+  '两千':'liǎng qiān','上个':'shàng gè',
+  // ── 2B single-char fallbacks (covers every unmatched char) ─────────
+  '吃':'chī','饭':'fàn','菜':'cài','服':'fú','务':'wù','方':'fāng',
+  '可':'kě','早':'zǎo','喝':'hē','块':'kuài','炒':'chǎo','面':'miàn',
+  '包':'bāo','买':'mǎi','用':'yòng','卖':'mài','部':'bù','茶':'chá',
+  '乐':'lè','十':'shí','条':'tiáo','粥':'zhōu','室':'shì','网':'wǎng',
+  '便':'biàn','请':'qǐng','单':'dān','两':'liǎng','手':'shǒu','机':'jī',
+  '以':'yǐ','料':'liào','水':'shuǐ','奶':'nǎi','绿':'lǜ','别':'bié',
+  '吗':'ma','共':'gòng','美':'měi','南':'nán','北':'běi','东':'dōng',
+  '做':'zuò','哈':'hā','般':'bān','试':'shì','能':'néng','食':'shí',
+  '堂':'táng','回':'huí','位':'wèi','饺':'jiǎo','汤':'tāng','盘':'pán',
+  '花':'huā','钱':'qián','支':'zhī','付':'fù','气':'qì','热':'rè',
+  '饮':'yǐn','果':'guǒ','汁':'zhī','牛':'niú','杯':'bēi','身':'shēn',
+  '体':'tǐ','瓶':'píng','五':'wǔ','特':'tè','米':'mǐ','广':'guǎng',
+  '粤':'yuè','香':'xiāng','姆':'mǔ','丹':'dān','鸡':'jī','蛋':'dàn',
+  '酪':'lào','斯':'sī','龙':'lóng','馒':'mán','头':'tóu','种':'zhǒng',
+  '类':'lèi','所':'suǒ','点':'diǎn','年':'nián','疫':'yì','情':'qíng',
+  '题':'tí','赛':'sài','义':'yì','德':'dé','会':'huì','午':'wǔ',
+  '着':'zhe','恢':'huī','复':'fù','正':'zhèng','常':'cháng','又':'yòu',
+  '餐':'cān','馆':'guǎn','走':'zǒu','过':'guò','几':'jǐ','带':'dài',
+  '桌':'zhuō','旁':'páng','边':'biān','坐':'zuò','碗':'wǎn','完':'wán',
+  '刚':'gāng','购':'gòu','物':'wù','周':'zhōu','末':'mò','商':'shāng',
+  '场':'chǎng','新':'xīn','千':'qiān','本':'běn','书':'shū','笔':'bǐ',
+  '金':'jīn','民':'mín','币':'bì','后':'hòu','西':'xī','外':'wài',
+  '出':'chū','门':'mén','员':'yuán','中':'zhōng','们':'men','二':'èr',
+
+  // ── Names ─────────────────────────────────────────────────────
+  '小明':'Xiǎomíng','小红':'Xiǎohóng','小华':'Xiǎohuá','小丽':'Xiǎolì',
+  '阿里':'Ālǐ','哈桑':'Hāsāng','法蒂玛':'Fǎdìmǎ','哈立德':'Hālìdé','玛丽亚':'Mǎlìyà',
+  // ── Countries & cities ────────────────────────────────────────
+  '中国人':'Zhōngguórén','阿联酋人':'Āliánqiúrén','沙特人':'Shātèrén',
+  '约旦人':'Yuēdànrén','埃及人':'Āijírén','阿曼人':'Āmànrén','英国人':'Yīngguórén',
+  '中国':'Zhōngguó','阿联酋':'Āliánqiú','迪拜':'Díbài','上海':'Shànghǎi',
+  '北京':'Běijīng','阿布扎比':'Ābùzhābǐ','沙特':'Shātè','约旦':'Yuēdàn',
+  '埃及':'Āijí','阿曼':'Āmàn',
+  // ── Greetings & social ────────────────────────────────────────
+  '你好':'nǐ hǎo','老师好':'lǎoshī hǎo','同学们':'tóngxuémen','同学':'tóngxué',
+  '很高兴':'hěn gāoxìng','认识':'rènshi','谢谢':'xièxie','不客气':'bú kèqì',
+  '对不起':'duìbuqǐ','没关系':'méi guānxi','再见':'zàijiàn',
+  // ── Pronouns ──────────────────────────────────────────────────
+  '我们':'wǒmen','你们':'nǐmen','他们':'tāmen','她们':'tāmen',
+  '我':'wǒ','你':'nǐ','他':'tā','她':'tā','您':'nín',
+  // ── Multi-char verbs & phrases (matched greedily before singles) ──
+  '不知道':'bù zhīdào','知道':'zhīdào','觉得':'juéde','来自':'láizì',
+  '住在':'zhùzài','学习':'xuéxí','上学':'shàngxué','上课':'shàngkè',
+  '下课':'xiàkè','放学':'fàngxué','喜欢':'xǐhuan',
+  '说':'shuō','问':'wèn','是':'shì','在':'zài','有':'yǒu','叫':'jiào',
+  '来':'lái','去':'qù','看':'kàn','学':'xué','教':'jiāo',
+  // ── Common nouns & phrases ────────────────────────────────────
+  '阿拉伯语':'Ālābóyǔ','英语':'Yīngyǔ','汉语':'Hànyǔ','中文':'Zhōngwén',
+  '拼音':'pīnyīn','汉字':'Hànzì','发音':'fāyīn','笔顺':'bǐshùn',
+  '有意思':'yǒu yìsi','意思':'yìsi','名字':'míngzi','朋友':'péngyou',
+  '好朋友':'hǎo péngyou','老师':'lǎoshī','国家':'guójiā','文化':'wénhuà',
+  '学校':'xuéxiào','初中':'chūzhōng','中学':'zhōngxué','小学':'xiǎoxué',
+  '年级':'niánjí','七年级':'qī niánjí','年龄':'niánlíng',
+  '数字':'shùzì','发财':'fācái','伊斯兰':'Yīsīlán',
+  '首都':'shǒudū','城市':'chéngshì','最大的':'zuì dà de',
+  '南边':'nánbiān','北边':'běibiān','东边':'dōngbiān','西边':'xībiān',
+  '有名':'yǒumíng','相似':'xiāngsì','重要':'zhòngyào',
+  '写字':'xiězì','姓名':'xìngmíng','休息日':'xiūxī rì',
+  '不上学':'bù shàngxué','星期一':'xīngqīyī','星期二':'xīngqīèr',
+  '星期三':'xīngqīsān','星期四':'xīngqīsì','星期五':'xīngqīwǔ',
+  '星期六':'xīngqīliù','星期天':'xīngqītiān','星期日':'xīngqīrì',
+  '每天':'měitiān','今天':'jīntiān','明天':'míngtiān','昨天':'zuótiān',
+  '十二岁':'shí èr suì','多大':'duō dà',
+  '表示':'biǎoshì','开始':'kāishǐ','开心':'kāixīn',
+  '帮助':'bāngzhù','自己':'zìjǐ','时候':'shíhou',
+  '孩子':'háizi','同一':'tóng yī','好朋友':'hǎo péngyou',
+  // ── Adverbs / particles ───────────────────────────────────────
+  '非常':'fēicháng','也':'yě','都':'dōu','很':'hěn','不':'bù','没':'méi',
+  '已经':'yǐjīng','一起':'yìqǐ','当然':'dāngrán','因为':'yīnwèi',
+  '所以':'suǒyǐ','但是':'dànshì','或者':'huòzhě','然后':'ránhòu',
+  // ── Multi-char entries (must come before single-char fallbacks) ──
+  '姓':'xìng','叫':'jiào','国':'guó','人':'rén','家':'jiā',
+  '岁':'suì','名':'míng','说':'shuō','想':'xiǎng','要':'yào',
+  // ── Single-char fallbacks — cover every char left unmatched ──
+  // Numbers
+  '一':'yī','七':'qī','三':'sān','八':'bā','四':'sì',
+  // Structural / high-frequency
+  '的':'de','了':'le','个':'gè','和':'hé',
+  // Demonstratives & question words
+  '这':'zhè','哪':'nǎ',
+  // Verbs (single-char that appear standalone in passages)
+  '上':'shàng',  // 上学 already covered; 上 alone = shàng
+  '下':'xià',    // 从上到下
+  '从':'cóng',   // 从上到下
+  '到':'dào',    // 从上到下
+  '先':'xiān',   // 先说姓
+  '再':'zài',    // 先说姓再说名
+  '还':'hái',    // 我们还有
+  '开':'kāi',    // 要开始 (开始 multi covered; 开 standalone)
+  '始':'shǐ',    // 开始 multi covered; 始 standalone fallback
+  '发':'fā',     // 发音 multi covered; 发 alone = fā (发财 covered)
+  '帮':'bāng',   // 帮助 multi covered; 帮 standalone fallback
+  '助':'zhù',    // 帮助 multi covered; 助 standalone fallback
+  '记':'jì',     // 记住汉字
+  '住':'zhù',    // 住在 multi covered; 住 standalone
+  '只':'zhǐ',    // 只认识
+  '对':'duì',    // 他对老师说
+  '表':'biǎo',   // 表示 multi covered; 表 standalone fallback
+  '示':'shì',    // 表示 multi covered; 示 standalone fallback
+  '活':'huó',    // 学校生活
+  '生':'shēng',  // 学生, 生活 — shēng in all passage contexts
+  '比':'bǐ',     // 比如
+  '如':'rú',     // 比如
+  // Nouns / adjectives (single-char standalone)
+  '好':'hǎo',    // 你好 multi covered; 好 alone = hǎo
+  '大':'dà',     // 大家 in passages
+  '天':'tiān',   // 每天 multi covered; 天 standalone
+  '每':'měi',    // 每天 multi covered; 每 standalone
+  '小':'xiǎo',   // 小明 covered; 小 standalone (小学 covered)
+  '孩':'hái',    // 孩子 multi covered; 孩 standalone fallback
+  '子':'zi',     // 孩子 multi covered; 子 standalone (neutral tone)
+  '时':'shí',    // 时候 multi covered; 时 standalone
+  '候':'hòu',    // 时候 multi covered; 候 standalone
+  '数':'shù',    // 数字 multi covered; 数 standalone
+  '班':'bān',    // 同一个班
+  '现':'xiàn',   // 现在 → 他现在住在
+  '王':'Wáng',   // surname 王 (王老师, 王小雨)
+  '海':'hǎi',    // 叫海山 (name component)
+  '山':'shān',   // 叫海山 (name component)
+  '左':'zuǒ',    // 从左到右
+  '右':'yòu',    // 从左到右
+  '心':'xīn',    // 很开心
+  '死':'sǐ',     // 四的发音像死
+  '多':'duō',    // 很多人
+  '像':'xiàng',  // 发音像发
+  '呢':'ne',     // 你呢
+  '课':'kè',     // 中文课
+  '趣':'qù',     // 有趣
+  '里':'lǐ',     // 阿里 multi covered; 里 standalone
+  '雨':'yǔ',     // 小雨 (name component)
+  '第':'dì',     // 第一天
+  '同':'tóng',   // 同一个班 (同一 multi covered; 同 standalone)
+  '最':'zuì',    // 最大的 multi covered; 最 standalone
+};
+
+// ── Build passage as word-blocks with py / ch spans ───────────────
+// Output: <div class="passage-body">  <span class="w"><span class="py">pīnyīn</span><span class="ch">汉字</span></span> ... </div>
+
+// ── Above-HSK3 vocabulary in reading passages ──────────────────
+const ABOVE_HSK3 = {
+  '一共': ['HSK4', 'altogether / in total'],
+  '发现': ['HSK4', 'to discover / find'],
+  '恢复': ['HSK4', 'to recover / return to normal'],
+  '方便': ['HSK4', 'convenient / handy'],
+};
+
+function buildVocabGloss(passage) {
+  const found = [];
+  for (const [word, info] of Object.entries(ABOVE_HSK3)) {
+    if (passage.includes(word)) {
+      found.push({ word, level: info[0], meaning: info[1] });
+    }
+  }
+  if (found.length === 0) return '';
+  const items = found.map(f =>
+    '<span class="vocab-gloss-item">' +
+    '<span class="vg-word">' + f.word + '</span>' +
+    '<span class="vg-level">' + f.level + '</span>' +
+    '<span class="vg-meaning">' + f.meaning + '</span>' +
+    '</span>'
+  ).join('');
+  return '<div class="vocab-gloss">' +
+    '<div class="vocab-gloss-label">📚 Above HSK 2/3 · 超纲词汇注释</div>' +
+    '<div class="vocab-gloss-items">' + items + '</div>' +
+    '</div>';
+}
+
+function buildPassageWithPinyin(passage) {
+  // Strip any existing ruby markup (from L1 hand-coded version)
+  const plain = passage.replace(/<ruby>/g,'').replace(/<\/ruby>/g,'')
+                        .replace(/<rt>[^<]*<\/rt>/g,'').replace(/<[^>]+>/g,'');
+
+  // Sort dict keys longest first to greedily match multi-char words
+  const keys = Object.keys(PINYIN_DICT).sort((a,b) => b.length - a.length);
+
+  // Tokenise: scan left-to-right, greedily match dict entries or single chars
+  const tokens = []; // { ch, py, isPunct, isBreak }
+  const PUNCT = /^[。，！？、：；""''「」【】()（）…—\n\r]+/;
+  let i = 0;
+  while (i < plain.length) {
+    // Newline → sentence break token
+    if (plain[i] === '\n' || plain[i] === '\r') {
+      tokens.push({ isBreak: true });
+      i++; continue;
+    }
+    // Punctuation
+    const pm = plain.slice(i).match(PUNCT);
+    if (pm) {
+      tokens.push({ ch: pm[0], py: '', isPunct: true });
+      i += pm[0].length; continue;
+    }
+    // Try dict match (longest first)
+    let matched = false;
+    for (const k of keys) {
+      if (plain.startsWith(k, i)) {
+        tokens.push({ ch: k, py: PINYIN_DICT[k] });
+        i += k.length; matched = true; break;
+      }
+    }
+    if (!matched) {
+      // Single character — no pinyin annotation
+      tokens.push({ ch: plain[i], py: '' });
+      i++;
+    }
+  }
+
+  // Render tokens as word-block spans
+  let html = '<div class="passage-body">';
+  for (const t of tokens) {
+    if (t.isBreak) {
+      html += '<span class="w brk"></span>';
+    } else if (t.isPunct) {
+      html += `<span class="w punct"><span class="py"></span><span class="ch">${t.ch}</span></span>`;
+    } else {
+      html += `<span class="w"><span class="py">${t.py}</span><span class="ch">${t.ch}</span></span>`;
+    }
+  }
+  html += '</div>';
+  return html;
+}
+
+function togglePassagePinyin(checkbox, passageId) {
+  const el = document.getElementById(passageId);
+  if (!el) return;
+  if (checkbox.checked) {
+    el.classList.remove('passage-nopinyin');
+  } else {
+    el.classList.add('passage-nopinyin');
+  }
+}
+
+function toggleHint(btn, hintId) {
+  const hintEl = document.getElementById(hintId);
+  if (!hintEl) return;
+  const isOpen = hintEl.classList.contains('show');
+  hintEl.classList.toggle('show', !isOpen);
+  btn.classList.toggle('open', !isOpen);
+  btn.querySelector('span:first-child').textContent = isOpen ? '💡 Show hint · 查看提示' : '💡 Hide hint · 隐藏提示';
+}
+
+function answerMC(i, correctIdx) {
+  const q = currentQs[qIndex];
+  const displayChoices = q._choices || q.choices;
+  document.querySelectorAll('.opt-btn').forEach(b => b.disabled = true);
+  const isCorrect = i === correctIdx;
+  if (isCorrect) { score++; document.getElementById(`opt${i}`).className = 'opt-btn correct'; }
+  else {
+    document.getElementById(`opt${i}`).className = 'opt-btn wrong';
+    document.getElementById(`opt${correctIdx}`).className = 'opt-btn correct';
+  }
+  playSound(isCorrect ? 'correct' : 'wrong');
+  // Record response
+  responses[qIndex] = { userIdx: i, correct: isCorrect, userLabel: displayChoices[i], correctLabel: displayChoices[correctIdx] };
+  showFeedback(isCorrect, displayChoices[correctIdx]);
+  document.getElementById('nextBtn').style.display = 'block';
+}
+
+function checkFill() {
+  const q = currentQs[qIndex];
+  const val = document.getElementById('fillIn').value.trim();
+  const correct = q.ans.some(a => val === a || val.toLowerCase() === a.toLowerCase());
+  document.getElementById('fillIn').className = 'fill-input ' + (correct?'correct':'wrong');
+  document.getElementById('fillIn').disabled = true;
+  document.querySelector('.submit-btn').disabled = true;
+  if (correct) score++;
+  playSound(correct ? 'correct' : 'wrong');
+  responses[qIndex] = { userText: val, correct, correctLabel: q.ans[0] };
+  showFeedback(correct, q.ans[0]);
+  document.getElementById('nextBtn').style.display = 'block';
+}
+
+function selectMatchLeft(i) {
+  window._matchSelected.l = i;
+  document.querySelectorAll('[id^="ml"]').forEach((el,j) => {
+    if (!el.classList.contains('matched')) el.classList.toggle('selected', j===i);
+  });
+  tryMatch();
+}
+
+function selectMatchRight(i, val) {
+  window._matchSelected.r = { i, val };
+  document.querySelectorAll('[id^="mr"]').forEach((el,j) => {
+    if (!el.classList.contains('matched')) el.classList.toggle('selected', j===i);
+  });
+  tryMatch();
+}
+
+function tryMatch() {
+  const { l, r } = window._matchSelected;
+  if (l === null || r === null) return;
+  // If left item already paired, unlink its previous right partner first
+  if (window._matchPairs[l] !== undefined) {
+    const oldRi = window._matchPairs[l];
+    const oldREl = document.getElementById(`mr${oldRi}`);
+    if (oldREl) { oldREl.classList.remove('selected','paired-right'); }
+  }
+  // If right item already claimed by another left, unlink that left first
+  for (const li in window._matchPairs) {
+    if (window._matchPairs[li] === r.i) {
+      document.getElementById(`ml${li}`) && document.getElementById(`ml${li}`).classList.remove('selected','paired-left');
+      delete window._matchPairs[li];
+    }
+  }
+  // Record the pairing (no correctness check yet)
+  window._matchPairs[l] = r.i;
+  document.getElementById(`ml${l}`).classList.remove('selected');
+  document.getElementById(`ml${l}`).classList.add('paired-left');
+  document.getElementById(`mr${r.i}`).classList.remove('selected');
+  document.getElementById(`mr${r.i}`).classList.add('paired-right');
+  window._matchSelected = { l:null, r:null };
+}
+
+function checkMatch() {
+  const q = currentQs[qIndex];
+  const pairedCount = Object.keys(window._matchPairs).length;
+  if (pairedCount < q.left.length) {
+    const fb = document.getElementById('fb');
+    if (fb) { fb.className = 'feedback show bad'; fb.textContent = '⚠ 请完成所有配对后再检查 · Please match all pairs before checking'; }
+    return;
+  }
+  // Now reveal correct / wrong for each pair
+  let allCorrect = true;
+  for (let li = 0; li < q.left.length; li++) {
+    const ri = window._matchPairs[li];
+    const correctRight = q.right[q.pairs[li][1]];
+    const userRight = window._shuffled[ri];
+    const isCorrect = userRight === correctRight;
+    if (!isCorrect) allCorrect = false;
+    document.getElementById(`ml${li}`).className = 'match-item ' + (isCorrect ? 'matched' : 'wrong-match');
+    document.getElementById(`mr${ri}`).className = 'match-item ' + (isCorrect ? 'matched' : 'wrong-match');
+  }
+  if (allCorrect) score++;
+  playSound(allCorrect ? 'correct' : 'wrong');
+  showFeedback(allCorrect, q.left.map((l,i) => `${l} → ${q.right[q.pairs[i][1]]}`).join(' | '));
+  responses[qIndex] = { correct: allCorrect, correctLabel: q.left.map((l,i) => `${l} → ${q.right[q.pairs[i][1]]}`).join(', ') };
+  document.getElementById('nextBtn').style.display = 'block';
+  document.querySelectorAll('.match-item').forEach(el => el.style.pointerEvents = 'none');
+}
+
+function submitHOTS() {
+  const val = document.getElementById('hotsInput')?.value?.trim() || '';
+  if (val.length < 30) {
+    alert(`Please write at least 30 characters before submitting.\n请至少写30个字符再提交。\n(Current: ${val.length} characters)`);
+    return;
+  }
+  score++;
+  document.getElementById('hotsInput').disabled = true;
+  document.querySelector('.hots-submit-btn').style.display = 'none';
+  document.getElementById('hotsSubmitted').style.display = 'block';
+  responses[qIndex] = { correct: true, userText: val, isOpen: true };
+  document.getElementById('nextBtn').style.display = 'block';
+}
+
+function showFeedback(correct, correctAns) {
+  const fb = document.getElementById('fb');
+  if (!fb) return;
+  fb.className = 'feedback show ' + (correct?'ok':'bad');
+  fb.textContent = correct
+    ? '✓ Correct! 正确！'
+    : `✗ The answer is: ${correctAns || ''} · 正确答案是：${correctAns || ''}`;
+}
+
+function nextQ() {
+  playSound('click');
+  qIndex++;
+  if (qIndex >= currentQs.length) { clearInterval(timerInterval); showResult(); }
+  else renderQuestion();
+}
+
+function showResult() {
+  document.getElementById('quizScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'block';
+  
+  const total = currentQs.length;
+  const pct = Math.round((score/total)*100);
+  const tierColors = ['ring-t1','ring-t2','ring-t3'];
+  document.getElementById('rRing').className = 'result-ring ' + tierColors[selectedTier];
+  document.getElementById('rRing').textContent = `${pct}%`;
+  document.getElementById('rTitle').textContent = score===total ? '优秀！Excellent!' : score>=total*0.7 ? '良好！Good work!' : '继续加油！Keep going!';
+  const tierNames = ['迈向掌握','达到掌握','深度掌握'];
+  const lesson = LESSONS[selectedLesson];
+  const nameTag = studentName ? ` · ${studentName} · ${studentClass}` : '';
+  document.getElementById('rSub').textContent = `${score} / ${total} correct · Tier ${selectedTier+1} · ${tierNames[selectedTier]} · ${lesson.num}: ${lesson.cn}${nameTag}`;
+  document.getElementById('rStars').textContent = score===total?'⭐⭐⭐':score>=total*0.7?'⭐⭐':'⭐';
+  const msgs = [
+    `Your score: <strong>${score}/${total}</strong>. Focus on key vocabulary from this lesson — recognising characters and sentence patterns is your first step. Keep reading aloud! 多读多看，积累词汇。`,
+    `Your score: <strong>${score}/${total}</strong>. You're applying sentence patterns well. Try creating your own sentences using the grammar from this lesson. 尝试自己造句练习！`,
+    `Your score: <strong>${score}/${total}</strong>. Excellent deeper understanding! You worked through extended questions, a reading passage, and a critical thinking challenge. Review any missed points and try expressing ideas in Chinese. 学以致用，继续深化！`,
+  ];
+  document.getElementById('rMsg').innerHTML = msgs[selectedTier];
+  playSound('complete');
+  // Build always-visible analytics panel
+  buildAnalyticsPanel();
+  // Show student survey
+  document.getElementById('studentSurveyWrap').style.display = 'block';
+}
+
+// (buildReviewPanel and toggleReview replaced by buildAnalyticsPanel above)
+
+function downloadAnswers() {
+  const lesson = LESSONS[selectedLesson];
+  const tierNames = ['Tier 1 · 迈向掌握','Tier 2 · 达到掌握','Tier 3 · 深度掌握'];
+  const now = new Date().toLocaleString();
+  let txt = `跨越丝路分层习题生成器 · 2B\n`;
+  txt += `Across the Silk Route — Answer Sheet\n`;
+  txt += `${'='.repeat(50)}\n`;
+  txt += `学生 Student: ${studentName||'—'}  班级 Class: ${studentClass||'—'}  学校 School: ${studentSchool||'—'}\n`;
+  txt += `Lesson: ${lesson.num} · ${lesson.title} (${lesson.cn})\n`;
+  txt += `Tier: ${tierNames[selectedTier]}\n`;
+  txt += `Score: ${score} / ${currentQs.length}\n`;
+  txt += `Date: ${now}\n`;
+  txt += `${'='.repeat(50)}\n\n`;
+
+  currentQs.forEach((q, i) => {
+    const r = responses[i];
+    const typeLabels = { mc:'MC 选择', fill:'Fill 填空', match:'Match 连线', reading:'Reading 阅读', hots:'HOTS 思维' };
+    const stemText = q.stem.replace(/<[^>]*>/g,'');
+    txt += `Q${i+1} [${typeLabels[q.type]||q.type}]\n`;
+    txt += `Question: ${stemText}\n`;
+
+    if (q.type === 'mc' || q.type === 'reading') {
+      const displayChoices = q._choices || q.choices;
+      const displayAns = (q._ans !== undefined) ? q._ans : q.ans;
+      txt += `Correct Answer: ${['A','B','C','D'][displayAns]}. ${displayChoices[displayAns]}\n`;
+      if (r) txt += `Your Answer:    ${['A','B','C','D'][r.userIdx]}. ${r.userLabel} ${r.correct?'✓':'✗'}\n`;
+      else txt += `Your Answer:    — Not answered\n`;
+    } else if (q.type === 'fill') {
+      txt += `Correct Answer: ${q.ans.join(' / ')}\n`;
+      txt += `Your Answer:    ${r?.userText || '— Not answered'} ${r?.correct?'✓':'✗'}\n`;
+    } else if (q.type === 'match') {
+      txt += `Correct Pairs:  ${q.left.map((l,j) => `${l} → ${q.right[q.pairs[j][1]]}`).join(' | ')}\n`;
+      txt += `Result:         ${r?.correct ? 'All correct ✓' : 'Not all matched ✗'}\n`;
+    } else if (q.type === 'hots') {
+      txt += `(Open response — no single correct answer)\n`;
+      txt += `Your Response:  ${r?.userText || '— Not submitted'}\n`;
+    }
+    txt += '\n';
+  });
+
+  txt += `${'='.repeat(50)}\n`;
+  txt += `Total Score: ${score} / ${currentQs.length} (${Math.round(score/currentQs.length*100)}%)\n`;
+
+  const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `答案_${lesson.id}_Tier${selectedTier+1}_${new Date().toISOString().slice(0,10)}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function retry() {
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('studentSurveyWrap').style.display = 'none';
+  
+  startQuiz();
+}
+
+function exitQuiz() {
+  if (!confirm('确定要返回设置吗？进度将不会保存。\nBack to settings? Your progress will not be saved.')) return;
+  clearInterval(timerInterval);
+  qIndex = 0; score = 0; responses = [];
+  document.getElementById('quizScreen').style.display = 'none';
+  
+  document.getElementById('setup').style.display = 'block';
+}
+
+function goBack() {
+  clearInterval(timerInterval);
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'none';
+  
+  document.getElementById('studentSurveyWrap').style.display = 'none';
+  document.getElementById('setup').style.display = 'block';
+}
+
+
+function printWorksheet() {
+  const lesson = LESSONS[selectedLesson];
+  const tierNames = ['Tier 1 · 迈向掌握', 'Tier 2 · 达到掌握', 'Tier 3 · 深度掌握'];
+  const tierLabel = tierNames[selectedTier];
+  const date = new Date().toLocaleDateString('zh-CN');
+
+  // Strip HTML tags helper
+  function stripTags(s) { return s.replace(/<[^>]*>/g, ''); }
+
+  // Build question HTML for print
+  function buildQHTML(q, idx) {
+    const qn = 'Q' + (idx + 1);
+    const typeMap = { mc: '选择题 MC', fill: '填空题 Fill-in', match: '连线题 Matching', reading: '阅读题 Reading', hots: '思维题 HOTS' };
+    let h = '<div class="pq">';
+    h += '<div class="pq-num">' + qn + ' <span class="pq-type">' + (typeMap[q.type] || q.type) + '</span></div>';
+
+    if (q.type === 'reading') {
+      // Passage (strip ruby markup)
+      const passagePlain = (q.passage || '')
+        .replace(/<ruby>/g, '').replace(/<\/ruby>/g, '')
+        .replace(/<rt>[^<]*<\/rt>/g, '').replace(/<[^>]+>/g, '');
+      h += '<div class="ppassage"><div class="ppassage-lbl">📖 ' + (q.passageLabel || '阅读理解') + '</div>' + passagePlain + '</div>';
+      h += '<div class="pq-stem">' + stripTags(q.stem) + '</div>';
+      const choices = q._choices || q.choices || [];
+      h += '<div class="popts">';
+      ['A','B','C','D'].forEach(function(k, ci) {
+        if (choices[ci] !== undefined) h += '<div class="popt"><span class="popt-k">' + k + '.</span> ' + choices[ci] + '</div>';
+      });
+      h += '</div>';
+    } else if (q.type === 'mc') {
+      h += '<div class="pq-stem">' + stripTags(q.stem) + '</div>';
+      const choices = q._choices || q.choices || [];
+      h += '<div class="popts">';
+      ['A','B','C','D'].forEach(function(k, ci) {
+        if (choices[ci] !== undefined) h += '<div class="popt"><span class="popt-k">' + k + '.</span> ' + choices[ci] + '</div>';
+      });
+      h += '</div>';
+    } else if (q.type === 'fill') {
+      h += '<div class="pq-stem">' + stripTags(q.stem) + '</div>';
+      h += '<div class="pline"></div>';
+    } else if (q.type === 'match') {
+      h += '<div class="pq-stem">' + stripTags(q.stem) + '</div>';
+      // Shuffle right column for print version
+      const rightShuffled = q.right.slice().sort(function() { return Math.random() - 0.5; });
+      h += '<div class="pmatch">';
+      h += '<div class="pmatch-col"><div class="pmatch-hdr">中文</div>' + q.left.map(function(l) { return '<div class="pmatch-item">' + l + '</div>'; }).join('') + '</div>';
+      h += '<div class="pmatch-col"><div class="pmatch-hdr">English</div>' + rightShuffled.map(function(r) { return '<div class="pmatch-item">' + r + '</div>'; }).join('') + '</div>';
+      h += '</div>';
+    } else if (q.type === 'hots') {
+      h += '<div class="photsbox">';
+      h += '<div class="phots-lbl">💭 HOTS · 批判性思维</div>';
+      h += '<div class="pq-stem">' + stripTags(q.stem) + '</div>';
+      if (q.prompts && q.prompts.length) {
+        h += '<ul class="phots-prompts">' + q.prompts.map(function(p) { return '<li>' + p + '</li>'; }).join('') + '</ul>';
+      }
+      h += '</div>';
+      h += '<div class="pwrite-lines">';
+      for (var li = 0; li < 6; li++) h += '<div class="pwrite-line"></div>';
+      h += '</div>';
+    }
+
+    h += '</div>';
+    return h;
+  }
+
+  let qsHTML = '';
+  currentQs.forEach(function(q, i) { qsHTML += buildQHTML(q, i); });
+
+  const printHTML = '<!DOCTYPE html>\n<html lang="zh">\n<head>\n<meta charset="UTF-8">\n<title>试卷 ' + lesson.num + ' ' + tierLabel + '</title>\n<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">\n<style>\n* { box-sizing: border-box; margin: 0; padding: 0; }\nbody { font-family: "DM Sans", sans-serif; color: #1a1714; background: #fff; padding: 24px 32px; max-width: 780px; margin: 0 auto; }\n@media print { body { padding: 0; } }\n.header { border-bottom: 3px solid #1a1714; padding-bottom: 12px; margin-bottom: 16px; }\n.header h1 { font-size: 18px; font-weight: 700; font-family: "Noto Serif SC", serif; }\n.header .meta { font-size: 12px; color: #666; margin-top: 4px; }\n.student-row { display: flex; gap: 24px; margin-bottom: 20px; font-size: 13px; }\n.student-row .field { display: flex; align-items: center; gap: 6px; }\n.student-row .field-line { border-bottom: 1px solid #999; min-width: 120px; height: 20px; }\n.pq { margin-bottom: 24px; page-break-inside: avoid; }\n.pq-num { font-size: 12px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 5px; }\n.pq-type { font-weight: 400; color: #888; font-size: 11px; }\n.pq-stem { font-size: 15px; line-height: 1.65; margin-bottom: 10px; font-family: "Noto Serif SC", serif; }\n.ppassage { background: #e8f7f0; border-left: 4px solid #1f8c5a; border-radius: 6px; padding: 10px 14px; margin-bottom: 10px; font-family: "Noto Serif SC", serif; font-size: 14px; line-height: 1.8; }\n.ppassage-lbl { font-size: 10px; font-weight: 700; color: #1f8c5a; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 6px; }\n.popts { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 16px; margin-left: 2px; }\n.popt { font-size: 13px; font-family: "Noto Serif SC", serif; padding: 3px 0; display: flex; gap: 6px; }\n.popt-k { font-weight: 700; min-width: 16px; }\n.pline { border-bottom: 1.5px solid #aaa; margin: 14px 0 4px; min-height: 26px; }\n.pmatch { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px; }\n.pmatch-col { display: flex; flex-direction: column; gap: 6px; }\n.pmatch-hdr { font-size: 11px; font-weight: 700; color: #777; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; }\n.pmatch-item { border: 1.5px solid #ddd; border-radius: 6px; padding: 7px 12px; font-size: 14px; font-family: "Noto Serif SC", serif; text-align: center; background: #f9f9f9; }\n.photsbox { background: #fffbea; border-left: 4px solid #c9a227; border-radius: 6px; padding: 12px 14px; margin-bottom: 10px; }\n.phots-lbl { font-size: 10px; font-weight: 700; color: #c9a227; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 6px; }\n.phots-prompts { margin: 8px 0 0 16px; font-size: 12px; color: #7a7570; }\n.phots-prompts li { margin-bottom: 4px; }\n.pwrite-lines { margin-top: 8px; }\n.pwrite-line { border-bottom: 1px solid #ccc; height: 30px; margin-bottom: 2px; }\n.footer { margin-top: 32px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 11px; color: #aaa; display: flex; justify-content: space-between; }\n</style>\n</head>\n<body>\n<div class="header">\n  <h1>跨越丝路分层习题生成器 · 2B</h1>\n  <div class="meta">' + lesson.num + ' · ' + lesson.title + ' (' + lesson.cn + ') &nbsp;|&nbsp; ' + tierLabel + ' &nbsp;|&nbsp; 共 ' + currentQs.length + ' 题 &nbsp;|&nbsp; ' + date + '</div>\n</div>\n<div class="student-row">\n  <div class="field">姓名 Name: <div class="field-line"></div></div>\n  <div class="field">日期 Date: <div class="field-line"></div></div>\n  <div class="field">得分 Score: <div class="field-line"></div></div>\n</div>\n' + qsHTML + '\n<div class="footer"><span>跨越丝路分层习题生成器 · 2B</span><span>' + lesson.num + ' · ' + tierLabel + '</span><span>Across the Silk Route</span></div>\n</body>\n</html>';
+
+  const win = window.open('', '_blank', 'width=860,height=960');
+  if (!win) { alert('请允许弹出窗口后重试。\nPlease allow pop-ups and try again.'); return; }
+  win.document.write(printHTML);
+  win.document.close();
+  win.focus();
+  setTimeout(function() { win.print(); }, 900);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// STUDENT INFO
+// ══════════════════════════════════════════════════════════════════
+let studentName = '', studentClass = '', studentSchool = '';
+
+function goToStudentInfo() {
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('studentInfoScreen').style.display = 'block';
+}
+
+function backToSetup() {
+  document.getElementById('studentInfoScreen').style.display = 'none';
+  document.getElementById('setup').style.display = 'block';
+}
+
+function confirmStudentInfo() {
+  const name = document.getElementById('si_name').value.trim();
+  const cls  = document.getElementById('si_class').value.trim();
+  const sch  = document.getElementById('si_school').value.trim();
+  if (!name) {
+    document.getElementById('si_name').focus();
+    document.getElementById('si_name').style.borderColor = 'var(--wrong)';
+    setTimeout(()=>{ document.getElementById('si_name').style.borderColor=''; }, 1500);
+    return;
+  }
+  if (!cls) {
+    document.getElementById('si_class').focus();
+    document.getElementById('si_class').style.borderColor = 'var(--wrong)';
+    setTimeout(()=>{ document.getElementById('si_class').style.borderColor=''; }, 1500);
+    return;
+  }
+  studentName = name; studentClass = cls; studentSchool = sch;
+  document.getElementById('studentInfoScreen').style.display = 'none';
+  
+  startQuiz();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SOUND EFFECTS
+// ══════════════════════════════════════════════════════════════════
+let soundOn = true;
+
+function toggleSound() {
+  soundOn = !soundOn;
+  document.getElementById('soundBtn').textContent = soundOn ? '🔊 Sound ON' : '🔇 Sound OFF';
+}
+
+function playSound(type) {
+  if (!soundOn) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    if (type === 'correct') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523, ctx.currentTime);
+      osc.frequency.setValueAtTime(659, ctx.currentTime + 0.12);
+      osc.frequency.setValueAtTime(784, ctx.currentTime + 0.24);
+      gain.gain.setValueAtTime(0.18, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.55);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.55);
+    } else if (type === 'wrong') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(220, ctx.currentTime);
+      osc.frequency.setValueAtTime(180, ctx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.14, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.4);
+    } else if (type === 'click') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(400, ctx.currentTime);
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.1);
+    } else if (type === 'complete') {
+      // Victory fanfare
+      const notes = [523,659,784,1047];
+      notes.forEach((f,idx) => {
+        const o2 = ctx.createOscillator();
+        const g2 = ctx.createGain();
+        o2.connect(g2); g2.connect(ctx.destination);
+        o2.type = 'sine'; o2.frequency.value = f;
+        g2.gain.setValueAtTime(0.15, ctx.currentTime + idx*0.15);
+        g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx*0.15 + 0.25);
+        o2.start(ctx.currentTime + idx*0.15);
+        o2.stop(ctx.currentTime + idx*0.15 + 0.3);
+      });
+    }
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ANALYTICS — builds always-visible panel on result screen
+// ══════════════════════════════════════════════════════════════════
+function buildAnalyticsPanel() {
+  const panel = document.getElementById('analyticsPanel');
+  const lesson = LESSONS[selectedLesson];
+  const tierNames = ['Tier 1 · 迈向掌握','Tier 2 · 达到掌握','Tier 3 · 深度掌握'];
+  const total = currentQs.length;
+  const typeLabels = { mc:'MC 选择题', fill:'Fill 填空题', match:'Match 连线题', reading:'Reading 阅读题', hots:'HOTS 思维题' };
+
+  // ─ Per-question data
+  let wrongQs = [], correctCount = 0, typeStats = {};
+  currentQs.forEach((q, i) => {
+    const r = responses[i];
+    const isCorrect = r?.correct === true;
+    if (isCorrect) correctCount++;
+    else wrongQs.push({ q, i, r });
+    if (!typeStats[q.type]) typeStats[q.type] = { total:0, correct:0 };
+    typeStats[q.type].total++;
+    if (isCorrect) typeStats[q.type].correct++;
+  });
+
+  const pct = Math.round(correctCount/total*100);
+
+  // ─ Section 1: Q-by-Q review
+  let reviewHtml = '';
+  currentQs.forEach((q, i) => {
+    const r = responses[i];
+    const isCorrect = r?.correct === true;
+    const isOpen = q.type === 'hots';
+    const stemText = q.stem.replace(/<[^>]*>/g,'').slice(0,90) + (q.stem.replace(/<[^>]*>/g,'').length>90?'…':'');
+    let correctLabel = '', userLabel = '';
+    if (q.type==='mc'||q.type==='reading') {
+      const dc = q._choices||q.choices; const da = (q._ans!==undefined)?q._ans:q.ans;
+      correctLabel = `${['A','B','C','D'][da]}. ${dc[da]}`;
+      userLabel = r ? `${['A','B','C','D'][r.userIdx]}. ${r.userLabel}` : '— 未作答';
+    } else if (q.type==='fill') {
+      correctLabel = q.ans[0]; userLabel = r?.userText||'— 未作答';
+    } else if (q.type==='match') {
+      correctLabel = '全部正确配对'; userLabel = r?.correct?'✓ 全部正确':'✗ 部分错误';
+    } else if (q.type==='hots') {
+      correctLabel = '开放作答'; userLabel = r?.userText?'已提交 ✓':'— 未提交';
+    }
+    const iconClass = isOpen ? 'aq-open' : isCorrect ? 'aq-correct' : 'aq-wrong';
+    const iconChar = isOpen ? '💭' : isCorrect ? '✓' : '✗';
+    reviewHtml += `<div class="analytics-q-row">
+      <div class="analytics-q-icon ${iconClass}">${iconChar}</div>
+      <div class="analytics-q-body">
+        <div class="analytics-q-num">Q${i+1} · ${typeLabels[q.type]||q.type}</div>
+        <div class="analytics-q-stem">${stemText}</div>
+        <div class="analytics-q-ans">
+          <span class="aq-tag aq-right-tag">✓ ${correctLabel}</span>
+          <span class="aq-tag aq-user-tag ${isCorrect?'':'aq-wrong-tag'}">你的答案: ${userLabel}</span>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  // ─ Section 2: Type-based strength bars
+  let strengthHtml = '';
+  Object.entries(typeStats).forEach(([type, stat]) => {
+    const pctT = Math.round(stat.correct/stat.total*100);
+    strengthHtml += `<div class="strength-bar">
+      <span class="strength-label">${typeLabels[type]||type}</span>
+      <div class="strength-track"><div class="strength-fill-${pctT>=60?'correct':'wrong'}" style="width:${pctT}%"></div></div>
+      <span style="font-size:12px;font-weight:700;color:${pctT>=60?'var(--correct)':'var(--wrong)'};min-width:36px">${pctT}%</span>
+    </div>`;
+  });
+
+  // ─ Section 3: Insight text
+  const strongTypes = Object.entries(typeStats).filter(([,s])=>s.correct/s.total>=0.7).map(([t])=>typeLabels[t]||t);
+  const weakTypes   = Object.entries(typeStats).filter(([,s])=>s.correct/s.total<0.5).map(([t])=>typeLabels[t]||t);
+  const studentLabel = studentName ? `<strong>${studentName}</strong>` : '你';
+  let insightText = `${studentLabel} 本次在 <strong>${lesson.num} · ${lesson.cn}</strong>（${tierNames[selectedTier]}）中得了 <strong>${correctCount}/${total}（${pct}%）</strong> 分。`;
+  if (strongTypes.length) insightText += ` 强项：${strongTypes.join('、')}。`;
+  if (weakTypes.length)   insightText += ` 需加强：<strong style="color:var(--wrong)">${weakTypes.join('、')}</strong>。建议重点复习错误题目，并完成下方的补弱练习。`;
+  else insightText += ' 整体表现良好，继续保持！';
+
+  // ─ Section 4: Remedial questions for wrong answers
+  let remedialHtml = '';
+  if (wrongQs.length > 0) {
+    const remedials = wrongQs.slice(0,4); // max 4 remedial Qs
+    remedials.forEach(({q, i}, ri) => {
+      if (q.type === 'mc' || q.type === 'reading') {
+        const dc = q._choices||q.choices; const da = (q._ans!==undefined)?q._ans:q.ans;
+        const stemText = q.stem.replace(/<[^>]*>/g,'');
+        remedialHtml += `<div class="remedial-q" id="rq${ri}">
+          <div class="remedial-q-label">补弱 Q${ri+1} · 重练错题 Retry Wrong Answer — ${typeLabels[q.type]}</div>
+          <div class="remedial-q-stem">${stemText}</div>
+          <div class="remedial-choices">
+            ${dc.map((c,ci) => `<button class="remedial-choice" id="rqc${ri}_${ci}" onclick="checkRemedial(${ri},${ci},${da})">${['A','B','C','D'][ci]}. ${c}</button>`).join('')}
+          </div>
+        </div>`;
+      } else if (q.type === 'fill') {
+        const stemText = q.stem.replace(/<[^>]*>/g,'');
+        remedialHtml += `<div class="remedial-q" id="rq${ri}">
+          <div class="remedial-q-label">补弱 Q${ri+1} · 重练错题 Retry Wrong Answer — Fill-in 填空</div>
+          <div class="remedial-q-stem">${stemText}</div>
+          <div style="display:flex;gap:8px;flex-direction:column">
+            <input class="fill-input" id="rqinput${ri}" placeholder="Write your answer · 填写答案" style="font-size:16px;padding:11px 14px;" onkeydown="if(event.key==='Enter')checkRemedialFill(${ri})">
+            <button class="submit-btn" onclick="checkRemedialFill(${ri})">提交 Submit</button>
+          </div>
+          <div class="feedback" id="rqfb${ri}" style="margin-top:8px;"></div>
+        </div>`;
+      }
+    });
+  } else {
+    remedialHtml = `<p style="color:var(--correct);font-weight:600;font-size:15px;text-align:center;padding:1rem;">🎉 全部答对，无需补弱练习！All answers correct — no remedial needed!</p>`;
+  }
+
+  panel.innerHTML = `
+    <div class="analytics-section">
+      <div class="analytics-section-title">📋 学情总览 · Learning Analysis</div>
+      <p class="analytics-insight" style="margin-bottom:1rem;">${insightText}</p>
+      ${strengthHtml}
+    </div>
+    <div class="analytics-section">
+      <div class="analytics-section-title">📝 逐题回顾 · Question-by-Question Review</div>
+      ${reviewHtml}
+    </div>
+    <div class="analytics-section">
+      <div class="analytics-section-title">🔧 补弱练习 · Remedial Practice</div>
+      ${remedialHtml}
+    </div>`;
+}
+
+function checkRemedial(ri, chosen, correct) {
+  const btns = document.querySelectorAll(`[id^="rqc${ri}_"]`);
+  btns.forEach(b => b.disabled = true);
+  btns.forEach((b,ci) => {
+    if (ci === correct) b.classList.add('rc-correct');
+    else if (ci === chosen && chosen !== correct) b.classList.add('rc-wrong');
+  });
+  playSound(chosen === correct ? 'correct' : 'wrong');
+}
+
+function checkRemedialFill(ri) {
+  const wrongQ = currentQs.filter(q => { const r = responses[currentQs.indexOf(q)]; return r&&!r.correct; })[ri];
+  if (!wrongQ) return;
+  const val = document.getElementById(`rqinput${ri}`)?.value.trim() || '';
+  const correct = wrongQ.ans.some(a => val.toLowerCase() === a.toLowerCase());
+  const fb = document.getElementById(`rqfb${ri}`);
+  if (fb) { fb.className='feedback show '+(correct?'ok':'bad'); fb.textContent = correct ? '✓ 正确！Correct!' : `✗ 正确答案: ${wrongQ.ans[0]}`; }
+  document.getElementById(`rqinput${ri}`).disabled = true;
+  playSound(correct ? 'correct' : 'wrong');
+}
+
+function downloadRemedial() {
+  const lesson = LESSONS[selectedLesson];
+  const tierNames = ['Tier 1 · 迈向掌握','Tier 2 · 达到掌握','Tier 3 · 深度掌握'];
+  let txt = `跨越丝路 · 补弱练习 Remedial Practice\n`;
+  txt += `${'='.repeat(50)}\n`;
+  txt += `学生 Student: ${studentName||'—'}  班级 Class: ${studentClass||'—'}  学校: ${studentSchool||'—'}\n`;
+  txt += `课时 Lesson: ${lesson.num} · ${lesson.cn}  |  Tier: ${tierNames[selectedTier]}\n`;
+  txt += `日期 Date: ${new Date().toLocaleString()}\n`;
+  txt += `${'='.repeat(50)}\n\n`;
+  txt += `以下是你做错的题目，请再次练习：\nThe following questions were answered incorrectly. Please retry:\n\n`;
+  let wrongCount = 0;
+  currentQs.forEach((q, i) => {
+    const r = responses[i];
+    if (!r || r.correct) return;
+    wrongCount++;
+    const stem = q.stem.replace(/<[^>]*>/g,'');
+    txt += `补弱Q${wrongCount} [${q.type}]\n问题: ${stem}\n`;
+    if (q.type==='mc'||q.type==='reading') {
+      const dc=q._choices||q.choices; const da=(q._ans!==undefined)?q._ans:q.ans;
+      ['A','B','C','D'].forEach((k,ci)=>{ if(dc[ci]) txt+=`  ${k}. ${dc[ci]}\n`; });
+      txt += `正确答案: ${['A','B','C','D'][da]}. ${dc[da]}\n`;
+      txt += `你的答案: ${['A','B','C','D'][r.userIdx]}. ${r.userLabel} ✗\n`;
+    } else if (q.type==='fill') {
+      txt += `正确答案: ${q.ans[0]}\n你的答案: ${r.userText||'—'} ✗\n`;
+    } else if (q.type==='match') {
+      txt += `正确配对: ${q.left.map((l,j)=>`${l}→${q.right[q.pairs[j][1]]}`).join(' | ')}\n`;
+    }
+    txt += '\n';
+  });
+  if (wrongCount === 0) txt += '🎉 全部正确！No remedial questions needed.\n';
+  const blob = new Blob([txt], { type:'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=`补弱_${studentName||'student'}_${lesson.id}_Tier${selectedTier+1}.txt`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// STUDENT SURVEY
+// ══════════════════════════════════════════════════════════════════
+const surveyData = {};
+
+function toggleSurveyBody() {
+  const body = document.getElementById('surveyBody');
+  const arrow = document.getElementById('surveyArrow');
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
+function selectSingle(qId, el) {
+  document.querySelectorAll(`#${qId} .survey-option`).forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  surveyData[qId] = el.textContent.trim();
+}
+
+function selectScale(qId, val) {
+  document.querySelectorAll(`#${qId} .survey-scale-btn`).forEach((b,i) => b.classList.toggle('selected', i+1===val));
+  surveyData[qId] = val;
+}
+
+function submitStudentSurvey() {
+  const required = ['sq1','sq2','sq3','sq4','sq5','sq6'];
+  const missing = required.filter(k => !surveyData[k]);
+  if (missing.length) {
+    const firstEl = document.getElementById(missing[0]);
+    firstEl.scrollIntoView({ behavior:'smooth', block:'center' });
+    firstEl.style.outline = '2px solid var(--wrong)';
+    setTimeout(()=>{ firstEl.style.outline=''; }, 1800);
+    alert('请完成所有必填项（带 * 号）后再提交。\nPlease answer all required questions (*) before submitting.');
+    return;
+  }
+  const suggestions = document.getElementById('survey_suggestions')?.value?.trim() || '';
+  const payload = {
+    type: '学生问卷 Student Survey',
+    student: studentName, class: studentClass, school: studentSchool,
+    lesson: LESSONS[selectedLesson]?.num + ' ' + LESSONS[selectedLesson]?.cn,
+    tier: ['Tier1','Tier2','Tier3'][selectedTier],
+    score: `${score}/${currentQs.length}`,
+    q1_overall: surveyData['sq1'],
+    q2_targeted: surveyData['sq2'],
+    q3_hsk_help: surveyData['sq3'],
+    q4_key_points: surveyData['sq4'],
+    q5_least_fav: surveyData['sq5'],
+    q6_most_fav: surveyData['sq6'],
+    suggestions: suggestions || '（无）',
+    submitted_at: new Date().toLocaleString()
+  };
+  const btn = document.querySelector('.survey-submit-btn');
+  btn.disabled = true; btn.textContent = '提交中… Submitting…';
+
+  // ──────────────────────────────────────────────────────────────
+  // Google Apps Script Web App — FREE, UNLIMITED submissions
+  // HOW TO SET UP (one-time, takes 5 minutes):
+  // 1. Go to https://sheets.google.com → create a new sheet
+  //    Name columns in Row 1: timestamp | type | student | class |
+  //    school | lesson | tier | score | q1 | q2 | q3 | q4 | q5 | q6 | suggestions
+  // 2. In the sheet: Extensions → Apps Script → paste this code:
+  //    function doPost(e) {
+  //      var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  //      var d = JSON.parse(e.postData.contents);
+  //      sheet.appendRow([new Date(),d.type,d.student,d.class,d.school,
+  //        d.lesson,d.tier,d.score,d.q1_overall,d.q2_targeted,d.q3_hsk_help,
+  //        d.q4_key_points,d.q5_least_fav,d.q6_most_fav,d.suggestions]);
+  //      return ContentService.createTextOutput('ok');
+  //    }
+  // 3. Deploy → New deployment → Web app
+  //    Execute as: Me | Who has access: Anyone
+  //    Copy the Web App URL and paste it below replacing PASTE_YOUR_URL_HERE
+  // ──────────────────────────────────────────────────────────────
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby9odViSPuKM6OQSYQa3VrhsLf0EUMHVo-y1B_89yhqpV-1BwFFf1v-aS6P2r3BfLZWPA/exec';
+
+  if (APPS_SCRIPT_URL === 'PASTE_YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+    // Fallback: save to localStorage so data is never lost even before setup
+    try {
+      const existing = JSON.parse(localStorage.getItem('surveyResponses') || '[]');
+      existing.push(payload);
+      localStorage.setItem('surveyResponses', JSON.stringify(existing));
+    } catch(e) {}
+    document.getElementById('surveyForm_submit').style.display = 'none';
+    document.getElementById('surveyThanks').style.display = 'block';
+    document.getElementById('surveyThanks').innerHTML =
+      '🎉 感谢你的反馈！<br><span style="font-size:12px;color:var(--muted);font-family:DM Sans,sans-serif;">（老师尚未配置收集服务，已暂存于本设备。Teacher has not yet linked Google Sheets — response saved locally.）</span>';
+    return;
+  }
+
+  // Send to Google Sheets via Apps Script (no-cors mode required)
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).then(() => {
+    document.getElementById('surveyForm_submit').style.display = 'none';
+    document.getElementById('surveyThanks').style.display = 'block';
+  }).catch(() => {
+    // Even on network error, save locally as backup
+    try {
+      const existing = JSON.parse(localStorage.getItem('surveyResponses') || '[]');
+      existing.push(payload);
+      localStorage.setItem('surveyResponses', JSON.stringify(existing));
+    } catch(e) {}
+    btn.disabled = false; btn.textContent = '提交反馈 Submit Feedback 📤';
+    alert('网络错误，请稍后再试。Network error — please try again later.');
+  });
+}
+
+buildSetup();
+</script>
+
+<!-- ─── FEEDBACK SECTION ─── -->
+<style>
+.feedback-section {
+  max-width: 780px;
+  margin: 2.5rem auto 0;
+  padding: 0 1.5rem 3rem;
+}
+.feedback-card {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 2rem 2rem 1.75rem;
+}
+.feedback-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 0.5rem;
+}
+.feedback-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #d4622a 0%, #c9a227 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.feedback-title {
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.feedback-title span {
+  font-family: 'Noto Serif SC', serif;
+}
+.feedback-subtitle {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.feedback-desc {
+  font-size: 13.5px;
+  color: var(--muted);
+  line-height: 1.7;
+  margin-bottom: 1.25rem;
+  padding: 12px 14px;
+  background: var(--bg);
+  border-radius: 10px;
+  border-left: 3px solid var(--t1);
+}
+.feedback-desc strong {
+  color: var(--text);
+}
+.feedback-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+@media (max-width: 520px) {
+  .feedback-form-row { grid-template-columns: 1fr; }
+}
+.feedback-input, .feedback-textarea {
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  transition: border-color .15s, background .15s;
+}
+.feedback-input:focus, .feedback-textarea:focus {
+  border-color: #999;
+  background: var(--card);
+}
+.feedback-textarea {
+  resize: vertical;
+  min-height: 100px;
+  margin-bottom: 10px;
+  line-height: 1.6;
+}
+.feedback-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.feedback-contact-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.feedback-contact-info a {
+  color: var(--t1);
+  font-weight: 600;
+  text-decoration: none;
+}
+.feedback-contact-info a:hover {
+  text-decoration: underline;
+}
+.feedback-submit {
+  padding: 11px 28px;
+  background: var(--text);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: opacity .15s;
+  white-space: nowrap;
+}
+.feedback-submit:hover { opacity: .85; }
+.feedback-thanks {
+  display: none;
+  text-align: center;
+  padding: 1.5rem 0 0.5rem;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--correct);
+  font-family: 'Noto Serif SC', serif;
+}
+.feedback-thanks span {
+  display: block;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 400;
+  margin-top: 4px;
+}
+.feedback-divider {
+  border: none;
+  border-top: 1.5px solid var(--border);
+  margin: 1.5rem 0 1.5rem;
+}
+</style>
+
+<script>
+function submitFeedback() {
+  var name = document.getElementById('fb_name').value.trim();
+  var lesson = document.getElementById('fb_lesson').value.trim();
+  var msg = document.getElementById('fb_msg').value.trim();
+  if (!msg) {
+    document.getElementById('fb_msg').focus();
+    document.getElementById('fb_msg').style.borderColor = 'var(--wrong)';
+    setTimeout(function(){ document.getElementById('fb_msg').style.borderColor = ''; }, 1500);
+    return;
+  }
+  var btn = document.querySelector('.feedback-submit');
+  btn.disabled = true;
+  btn.textContent = '发送中… Sending…';
+  fetch('https://formspree.io/f/mqenoyyz', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify({
+      name: name || '（未填写）',
+      lesson: lesson || '（未填写）',
+      message: msg
+    })
+  })
+  .then(function(res) {
+    if (res.ok) {
+      document.getElementById('feedbackForm').style.display = 'none';
+      document.getElementById('feedbackThanks').style.display = 'block';
+    } else {
+      btn.disabled = false;
+      btn.textContent = '提交反馈 Submit';
+      alert('发送失败，请直接发邮件至 Sun.Hao@moe.sch.ae');
+    }
+  })
+  .catch(function() {
+    btn.disabled = false;
+    btn.textContent = '提交反馈 Submit';
+    alert('网络错误，请直接发邮件至 Sun.Hao@moe.sch.ae');
+  });
+}
+</script>
+</body>
+</html>
